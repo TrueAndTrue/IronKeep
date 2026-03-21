@@ -8,6 +8,8 @@ server/
 # =========================
 plugins/**/build/
 plugins/**/.gradle/
+*.jar
+!plugins/**/gradle/wrapper/gradle-wrapper.jar
 
 # =========================
 # IDE / editor

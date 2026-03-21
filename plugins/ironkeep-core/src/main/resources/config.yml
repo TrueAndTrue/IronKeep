@@ -1,0 +1,25 @@
+commissions:
+  - item: WHEAT
+    quantity: 64
+    reward: 50.0
+  - item: IRON_INGOT
+    quantity: 32
+    reward: 100.0
+  - item: GOLD_INGOT
+    quantity: 16
+    reward: 150.0
+  - item: DIAMOND
+    quantity: 5
+    reward: 500.0
+  - item: OAK_LOG
+    quantity: 128
+    reward: 75.0
+  - item: COAL
+    quantity: 64
+    reward: 40.0
+  - item: COOKED_BEEF
+    quantity: 32
+    reward: 60.0
+  - item: STONE
+    quantity: 256
+    reward: 80.0
