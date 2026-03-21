@@ -35,6 +35,7 @@ public class IronKeepPlugin extends JavaPlugin {
         starterKitManager = new StarterKitManager(this, kitConfig);
         starterKitManager.load();
         getServer().getPluginManager().registerEvents(new StarterKitListener(starterKitManager), this);
+        getServer().getPluginManager().registerEvents(new WoodcuttingListener(this), this);
 
         wardenManager = new WardenManager(this);
         getServer().getPluginManager().registerEvents(new WardenListener(this, wardenManager), this);
