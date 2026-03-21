@@ -10,6 +10,7 @@ public class IronKeepPlugin extends JavaPlugin {
 
     private CommissionManager commissionManager;
     private StarterKitManager starterKitManager;
+    private WardenManager wardenManager;
 
     @SuppressWarnings("UnstableApiUsage")
     @Override
@@ -24,6 +25,10 @@ public class IronKeepPlugin extends JavaPlugin {
         starterKitManager = new StarterKitManager(this, kitConfig);
         starterKitManager.load();
         getServer().getPluginManager().registerEvents(new StarterKitListener(starterKitManager), this);
+
+        wardenManager = new WardenManager(this);
+        getServer().getPluginManager().registerEvents(new WardenListener(this, wardenManager), this);
+        getServer().getScheduler().runTaskLater(this, wardenManager::spawnWarden, 1L);
 
         // Paper plugins register commands via the lifecycle manager, not paper-plugin.yml
         LifecycleEventManager<Plugin> manager = this.getLifecycleManager();
