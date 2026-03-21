@@ -64,7 +64,7 @@ public class CommissionCommand implements BasicCommand {
         player.sendMessage(PREFIX + ChatColor.GREEN + "New commission assigned!");
         player.sendMessage(ChatColor.GOLD + "  Item:     " + ChatColor.YELLOW + formatItem(commission.getItem()));
         player.sendMessage(ChatColor.GOLD + "  Quantity: " + ChatColor.YELLOW + commission.getQuantity());
-        player.sendMessage(ChatColor.GOLD + "  Reward:   " + ChatColor.YELLOW + formatCoins(commission.getReward()));
+        player.sendMessage(ChatColor.GOLD + "  Reward:   " + ChatColor.YELLOW + formatGoldCoins(commission.getReward()));
     }
 
     private void handleSubmit(Player player) {
@@ -95,14 +95,14 @@ public class CommissionCommand implements BasicCommand {
             return;
         }
 
-        // Remove items and award coins
+        // Remove items and award Gold Coins
         removeItems(player, material, needed);
         manager.addBalance(uuid, commission.getReward());
         manager.clearCommission(uuid);
 
         player.sendMessage(PREFIX + ChatColor.GREEN + "Commission complete! You earned "
-                + ChatColor.YELLOW + formatCoins(commission.getReward()) + ChatColor.GREEN + ".");
-        player.sendMessage(ChatColor.GOLD + "  Balance: " + ChatColor.YELLOW + formatCoins(manager.getBalance(uuid)));
+                + ChatColor.YELLOW + formatGoldCoins(commission.getReward()) + ChatColor.GREEN + ".");
+        player.sendMessage(ChatColor.GOLD + "  Balance: " + ChatColor.YELLOW + formatGoldCoins(manager.getBalance(uuid)));
     }
 
     private void handleStatus(Player player) {
@@ -119,7 +119,7 @@ public class CommissionCommand implements BasicCommand {
         player.sendMessage(PREFIX + ChatColor.GOLD + "Active Commission:");
         player.sendMessage(ChatColor.GOLD + "  Item:     " + ChatColor.YELLOW + formatItem(commission.getItem()));
         player.sendMessage(ChatColor.GOLD + "  Quantity: " + ChatColor.YELLOW + commission.getQuantity());
-        player.sendMessage(ChatColor.GOLD + "  Reward:   " + ChatColor.YELLOW + formatCoins(commission.getReward()));
+        player.sendMessage(ChatColor.GOLD + "  Reward:   " + ChatColor.YELLOW + formatGoldCoins(commission.getReward()));
     }
 
     private void sendUsage(Player player) {
@@ -161,10 +161,10 @@ public class CommissionCommand implements BasicCommand {
         return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
     }
 
-    private String formatCoins(double amount) {
+    private String formatGoldCoins(double amount) {
         if (amount == Math.floor(amount)) {
-            return (long) amount + " coins";
+            return (long) amount + " Gold Coins";
         }
-        return String.format("%.2f coins", amount);
+        return String.format("%.2f Gold Coins", amount);
     }
 }
