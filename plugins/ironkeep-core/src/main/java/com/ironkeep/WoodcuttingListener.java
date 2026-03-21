@@ -29,17 +29,6 @@ public class WoodcuttingListener implements Listener {
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
-        String logTypeStr = plugin.getConfig().getString("woodcutting.log-type", "OAK_LOG");
-        Material logType;
-        try {
-            logType = Material.valueOf(logTypeStr);
-        } catch (IllegalArgumentException e) {
-            logType = Material.OAK_LOG;
-            logTypeStr = "OAK_LOG";
-        }
-
-        if (event.getBlock().getType() != logType) return;
-
         Player player = event.getPlayer();
         CommissionManager commissionManager = plugin.getCommissionManager();
 
@@ -48,7 +37,19 @@ public class WoodcuttingListener implements Listener {
         CommissionDefinition def = commissionManager.getActiveCommission(player);
         if (def == null || !def.getType().equalsIgnoreCase("WOODCUTTING")) return;
 
-        // Check axe requirement
+        // The block broken must match this commission's objective item
+        Material requiredMaterial;
+        try {
+            requiredMaterial = Material.valueOf(def.getObjectiveItem());
+        } catch (IllegalArgumentException e) {
+            plugin.getLogger().warning("WoodcuttingListener: invalid objective-item '"
+                    + def.getObjectiveItem() + "' in commission " + def.getId());
+            return;
+        }
+
+        if (event.getBlock().getType() != requiredMaterial) return;
+
+        // Check axe requirement (configurable, default true)
         if (plugin.getConfig().getBoolean("woodcutting.require-axe", true)) {
             ItemStack mainHand = player.getInventory().getItemInMainHand();
             if (!AXES.contains(mainHand.getType())) return;
