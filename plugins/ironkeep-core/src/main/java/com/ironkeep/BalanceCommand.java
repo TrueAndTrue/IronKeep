@@ -16,7 +16,7 @@ public class BalanceCommand implements BasicCommand {
     }
 
     public void register(Commands commands) {
-        commands.register("balance", "Check your coin balance", this);
+        commands.register("balance", "Check your Gold Coin balance", this);
     }
 
     @Override
@@ -29,9 +29,9 @@ public class BalanceCommand implements BasicCommand {
         double balance = plugin.getCommissionManager().getBalance(player.getUniqueId());
         String formatted;
         if (balance == Math.floor(balance)) {
-            formatted = (long) balance + " coins";
+            formatted = (long) balance + " Gold Coins";
         } else {
-            formatted = String.format("%.2f coins", balance);
+            formatted = String.format("%.2f Gold Coins", balance);
         }
 
         player.sendMessage(ChatColor.GOLD + "Your balance: " + ChatColor.YELLOW + formatted);
