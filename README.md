@@ -44,9 +44,17 @@ The `server/` directory contains the full runtime and is **not tracked in git**.
    ```
    On first run, edit `server/eula.txt` and set `eula=true`, then start it again.
 
-## Building the Plugin
+## Quick Start
 
-From the project root:
+From the project root, run:
+
+```
+./start.bat
+```
+
+This builds the plugin (clean) and starts the server in one step. If the build fails, the server won't launch.
+
+## Building the Plugin Only
 
 ```
 cd plugins/ironkeep-core
@@ -55,16 +63,24 @@ cd plugins/ironkeep-core
 
 This compiles the plugin and automatically copies the JAR into `server/plugins/`. Restart the server to load the updated plugin.
 
-## Running the Server
+## Running the Server Only
 
 ```
 cd server
 java -Xms2G -Xmx4G -jar paper-1.21.11-127.jar --nogui
 ```
 
-Or use `./start.bat` if Java is on your PATH.
-
 The server console accepts commands directly (without a `/` prefix), e.g., `op PlayerName`.
+
+## Resetting Player Data
+
+To test as a fresh player, stop the server and run:
+
+```
+./reset-player.bat <uuid>
+```
+
+This clears Minecraft player data (inventory, position, advancements, stats) and all plugin tracking (starter kit, warden dialogue, balance, commissions). Run with no arguments to see known players and their UUIDs.
 
 ## Connecting
 
