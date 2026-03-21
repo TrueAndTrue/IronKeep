@@ -25,7 +25,12 @@ public class CommissionRegistry {
         definitions.clear();
         File file = new File(plugin.getDataFolder(), "commissions.yml");
         if (!file.exists()) {
+            plugin.getLogger().info("commissions.yml not found — extracting default from jar.");
             plugin.saveResource("commissions.yml", false);
+        }
+        if (!file.exists()) {
+            plugin.getLogger().severe("commissions.yml could not be created! No commissions will be loaded.");
+            return;
         }
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
         ConfigurationSection section = yaml.getConfigurationSection("commissions");

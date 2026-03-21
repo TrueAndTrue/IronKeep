@@ -11,6 +11,7 @@ public class IronKeepPlugin extends JavaPlugin {
     private CommissionRegistry commissionRegistry;
     private CurrencyManager currencyManager;
     private CommissionManager commissionManager;
+    private CommissionBoardManager commissionBoardManager;
     private StarterKitManager starterKitManager;
     private WardenManager wardenManager;
 
@@ -29,6 +30,12 @@ public class IronKeepPlugin extends JavaPlugin {
         stateStore.load();
 
         commissionManager = new CommissionManager(commissionRegistry, stateStore, currencyManager);
+
+        commissionBoardManager = new CommissionBoardManager(this);
+        commissionBoardManager.load();
+        getServer().getPluginManager().registerEvents(new CommissionBoardListener(this, commissionBoardManager), this);
+        // Place board blocks after world is ready
+        getServer().getScheduler().runTaskLater(this, () -> commissionBoardManager.placeBoards(), 1L);
 
         StarterKitConfig kitConfig = new StarterKitConfig(this);
         kitConfig.load();
@@ -66,5 +73,9 @@ public class IronKeepPlugin extends JavaPlugin {
 
     public CommissionManager getCommissionManager() {
         return commissionManager;
+    }
+
+    public CommissionBoardManager getCommissionBoardManager() {
+        return commissionBoardManager;
     }
 }
