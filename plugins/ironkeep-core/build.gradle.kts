@@ -21,6 +21,12 @@ dependencies {
 }
 
 tasks {
+    processResources {
+        filesMatching("paper-plugin.yml") {
+            expand("version" to project.version)
+        }
+    }
+
     jar {
         archiveBaseName.set("ironkeep-core")
     }
