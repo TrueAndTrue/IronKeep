@@ -43,15 +43,18 @@ public class WoodcuttingListener implements Listener {
         Player player = event.getPlayer();
         CommissionManager commissionManager = plugin.getCommissionManager();
 
-        if (!commissionManager.hasActiveCommission(player.getUniqueId())) return;
-        Commission commission = commissionManager.getActiveCommission(player.getUniqueId());
-        if (!commission.getItem().equals(logTypeStr)) return;
+        // Check player has an active WOODCUTTING commission
+        if (!commissionManager.hasActiveCommission(player)) return;
+        CommissionDefinition def = commissionManager.getActiveCommission(player);
+        if (def == null || !def.getType().equalsIgnoreCase("WOODCUTTING")) return;
 
+        // Check axe requirement
         if (plugin.getConfig().getBoolean("woodcutting.require-axe", true)) {
             ItemStack mainHand = player.getInventory().getItemInMainHand();
             if (!AXES.contains(mainHand.getType())) return;
         }
 
+        // Check optional region restriction
         if (plugin.getConfig().getBoolean("woodcutting.region-enabled", false)) {
             Location loc = event.getBlock().getLocation();
             double minX = plugin.getConfig().getDouble("woodcutting.region.min.x");
@@ -65,6 +68,6 @@ public class WoodcuttingListener implements Listener {
                     || loc.getZ() < minZ || loc.getZ() > maxZ) return;
         }
 
-        commissionManager.incrementProgress(player.getUniqueId());
+        commissionManager.incrementProgress(player.getUniqueId(), 1);
     }
 }
