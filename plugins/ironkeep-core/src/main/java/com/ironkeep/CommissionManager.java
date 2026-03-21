@@ -1,153 +1,120 @@
 package com.ironkeep;
 
-import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.ChatColor;
+import org.bukkit.entity.Player;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
 import java.util.UUID;
 
 public class CommissionManager {
 
-    private final IronKeepPlugin plugin;
-    private final File commissionsFile;
-    private final File balancesFile;
+    private static final String PREFIX = ChatColor.GOLD + "[Commission] " + ChatColor.RESET;
 
-    // uuid -> active commission
-    private final Map<UUID, Commission> activeCommissions = new HashMap<>();
-    // uuid -> balance
-    private final Map<UUID, Double> balances = new HashMap<>();
+    private final CommissionRegistry registry;
+    private final CommissionStateStore stateStore;
+    private final CurrencyManager currencyManager;
 
-    private final List<Commission> pool = new ArrayList<>();
-    private final Random random = new Random();
-
-    public CommissionManager(IronKeepPlugin plugin) {
-        this.plugin = plugin;
-        this.commissionsFile = new File(plugin.getDataFolder(), "commissions.yml");
-        this.balancesFile = new File(plugin.getDataFolder(), "balances.yml");
+    public CommissionManager(CommissionRegistry registry, CommissionStateStore stateStore,
+                             CurrencyManager currencyManager) {
+        this.registry = registry;
+        this.stateStore = stateStore;
+        this.currencyManager = currencyManager;
     }
 
-    public void load() {
-        loadPool();
-        loadCommissions();
-        loadBalances();
+    public void assignCommission(Player player) {
+        if (hasActiveCommission(player)) {
+            player.sendMessage(PREFIX + ChatColor.RED + "You already have an active commission. "
+                    + "Use " + ChatColor.YELLOW + "/commission status" + ChatColor.RED + " to view it.");
+            return;
+        }
+        CommissionDefinition def = registry.getRandom();
+        if (def == null) {
+            player.sendMessage(PREFIX + ChatColor.RED + "No commissions are available right now.");
+            return;
+        }
+        UUID uuid = player.getUniqueId();
+        PlayerCommissionState state = new PlayerCommissionState(uuid);
+        state.setActiveCommissionId(def.getId());
+        state.setProgress(0);
+        stateStore.setState(uuid, state);
+
+        player.sendMessage(PREFIX + ChatColor.GREEN + "New commission assigned!");
+        player.sendMessage(ChatColor.GOLD + "  Name:     " + ChatColor.YELLOW + def.getDisplayName());
+        player.sendMessage(ChatColor.GOLD + "  Task:     " + ChatColor.YELLOW + def.getDescription());
+        player.sendMessage(ChatColor.GOLD + "  Goal:     " + ChatColor.YELLOW
+                + def.getObjectiveQuantity() + "x " + formatItem(def.getObjectiveItem()));
+        player.sendMessage(ChatColor.GOLD + "  Reward:   " + ChatColor.YELLOW + formatCoins(def.getRewardAmount()));
     }
 
-    public void save() {
-        saveCommissions();
-        saveBalances();
-    }
+    public void recordProgress(Player player, int amount) {
+        UUID uuid = player.getUniqueId();
+        PlayerCommissionState state = stateStore.getState(uuid);
+        if (state == null || state.getActiveCommissionId() == null) return;
+        CommissionDefinition def = registry.getById(state.getActiveCommissionId());
+        if (def == null) return;
 
-    private void loadPool() {
-        pool.clear();
-        List<?> list = plugin.getConfig().getList("commissions");
-        if (list == null) return;
-        for (Object obj : list) {
-            if (!(obj instanceof Map<?, ?> map)) continue;
-            String item = String.valueOf(map.get("item"));
-            int quantity = ((Number) map.get("quantity")).intValue();
-            double reward = ((Number) map.get("reward")).doubleValue();
-            pool.add(new Commission(item, quantity, reward));
+        int newProgress = state.getProgress() + amount;
+        state.setProgress(newProgress);
+        stateStore.setState(uuid, state);
+
+        if (newProgress >= def.getObjectiveQuantity()) {
+            player.sendMessage(ChatColor.GREEN
+                    + "Commission objective reached! Use /commission complete to turn in.");
         }
     }
 
-    private void loadCommissions() {
-        activeCommissions.clear();
-        if (!commissionsFile.exists()) return;
-        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(commissionsFile);
-        for (String key : yaml.getKeys(false)) {
-            String value = yaml.getString(key);
-            if (value == null) continue;
-            String[] parts = value.split(":");
-            if (parts.length != 2) continue;
-            try {
-                UUID uuid = UUID.fromString(key);
-                String item = parts[0];
-                int quantity = Integer.parseInt(parts[1]);
-                // Find matching commission from pool to get reward
-                double reward = 0.0;
-                for (Commission c : pool) {
-                    if (c.getItem().equals(item) && c.getQuantity() == quantity) {
-                        reward = c.getReward();
-                        break;
-                    }
-                }
-                activeCommissions.put(uuid, new Commission(item, quantity, reward));
-            } catch (IllegalArgumentException ignored) {}
+    public CommissionDefinition getActiveCommission(Player player) {
+        PlayerCommissionState state = stateStore.getState(player.getUniqueId());
+        if (state == null || state.getActiveCommissionId() == null) return null;
+        return registry.getById(state.getActiveCommissionId());
+    }
+
+    public PlayerCommissionState getPlayerState(Player player) {
+        return stateStore.getState(player.getUniqueId());
+    }
+
+    public boolean hasActiveCommission(Player player) {
+        PlayerCommissionState state = stateStore.getState(player.getUniqueId());
+        return state != null && state.getActiveCommissionId() != null;
+    }
+
+    public void completeCommission(Player player) {
+        UUID uuid = player.getUniqueId();
+        PlayerCommissionState state = stateStore.getState(uuid);
+        if (state == null || state.getActiveCommissionId() == null) {
+            player.sendMessage(PREFIX + ChatColor.RED + "You have no active commission.");
+            return;
         }
-    }
-
-    private void loadBalances() {
-        balances.clear();
-        if (!balancesFile.exists()) return;
-        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(balancesFile);
-        for (String key : yaml.getKeys(false)) {
-            try {
-                UUID uuid = UUID.fromString(key);
-                balances.put(uuid, yaml.getDouble(key));
-            } catch (IllegalArgumentException ignored) {}
+        CommissionDefinition def = registry.getById(state.getActiveCommissionId());
+        if (def == null) {
+            player.sendMessage(PREFIX + ChatColor.RED
+                    + "Your commission is no longer valid. It has been cleared.");
+            stateStore.clearState(uuid);
+            return;
         }
-    }
-
-    private void saveCommissions() {
-        YamlConfiguration yaml = new YamlConfiguration();
-        for (Map.Entry<UUID, Commission> entry : activeCommissions.entrySet()) {
-            Commission c = entry.getValue();
-            yaml.set(entry.getKey().toString(), c.getItem() + ":" + c.getQuantity());
+        if (state.getProgress() < def.getObjectiveQuantity()) {
+            int remaining = def.getObjectiveQuantity() - state.getProgress();
+            player.sendMessage(PREFIX + ChatColor.RED + "Commission not yet complete. Progress: "
+                    + ChatColor.YELLOW + state.getProgress() + "/" + def.getObjectiveQuantity()
+                    + ChatColor.RED + " (" + remaining + " remaining).");
+            return;
         }
-        try {
-            yaml.save(commissionsFile);
-        } catch (IOException e) {
-            plugin.getLogger().severe("Failed to save commissions.yml: " + e.getMessage());
+        currencyManager.addBalance(uuid, def.getRewardAmount());
+        stateStore.clearState(uuid);
+        player.sendMessage(PREFIX + ChatColor.GREEN + "Commission complete! You earned "
+                + ChatColor.YELLOW + formatCoins(def.getRewardAmount()) + ChatColor.GREEN + ".");
+        player.sendMessage(ChatColor.GOLD + "  Balance: "
+                + ChatColor.YELLOW + formatCoins(currencyManager.getBalance(uuid)));
+    }
+
+    private String formatItem(String materialName) {
+        String lower = materialName.replace('_', ' ').toLowerCase();
+        return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
+    }
+
+    private String formatCoins(double amount) {
+        if (amount == Math.floor(amount)) {
+            return (long) amount + " Gold Coins";
         }
-    }
-
-    private void saveBalances() {
-        YamlConfiguration yaml = new YamlConfiguration();
-        for (Map.Entry<UUID, Double> entry : balances.entrySet()) {
-            yaml.set(entry.getKey().toString(), entry.getValue());
-        }
-        try {
-            yaml.save(balancesFile);
-        } catch (IOException e) {
-            plugin.getLogger().severe("Failed to save balances.yml: " + e.getMessage());
-        }
-    }
-
-    public boolean hasActiveCommission(UUID uuid) {
-        return activeCommissions.containsKey(uuid);
-    }
-
-    public Commission getActiveCommission(UUID uuid) {
-        return activeCommissions.get(uuid);
-    }
-
-    /**
-     * Assigns a random commission from the pool. Returns null if pool is empty.
-     */
-    public Commission assignCommission(UUID uuid) {
-        if (pool.isEmpty()) return null;
-        Commission commission = pool.get(random.nextInt(pool.size()));
-        activeCommissions.put(uuid, commission);
-        saveCommissions();
-        return commission;
-    }
-
-    public void clearCommission(UUID uuid) {
-        activeCommissions.remove(uuid);
-        saveCommissions();
-    }
-
-    public double getBalance(UUID uuid) {
-        return balances.getOrDefault(uuid, 0.0);
-    }
-
-    public void addBalance(UUID uuid, double amount) {
-        balances.put(uuid, getBalance(uuid) + amount);
-        saveBalances();
+        return String.format("%.2f Gold Coins", amount);
     }
 }
