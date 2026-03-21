@@ -1,3 +1,12 @@
+warden:
+  spawn:
+    world: world
+    x: 0.5
+    y: 64.0
+    z: 0.5
+    yaw: 0.0
+    pitch: 0.0
+
 commissions:
   - item: WHEAT
     quantity: 64
