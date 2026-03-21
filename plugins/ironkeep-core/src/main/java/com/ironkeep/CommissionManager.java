@@ -45,6 +45,25 @@ public class CommissionManager {
         player.sendMessage(ChatColor.GOLD + "  Reward:   " + ChatColor.YELLOW + formatCoins(def.getRewardAmount()));
     }
 
+    public void incrementProgress(UUID uuid, int amount) {
+        PlayerCommissionState state = stateStore.getState(uuid);
+        if (state == null || state.getActiveCommissionId() == null) return;
+        CommissionDefinition def = registry.getById(state.getActiveCommissionId());
+        if (def == null) return;
+
+        int newProgress = state.getProgress() + amount;
+        state.setProgress(newProgress);
+        stateStore.setState(uuid, state);
+
+        if (newProgress >= def.getObjectiveQuantity()) {
+            org.bukkit.entity.Player player = org.bukkit.Bukkit.getPlayer(uuid);
+            if (player != null) {
+                player.sendMessage(org.bukkit.ChatColor.GREEN
+                        + "Commission objective reached! Use /commission complete to turn in.");
+            }
+        }
+    }
+
     public void recordProgress(Player player, int amount) {
         UUID uuid = player.getUniqueId();
         PlayerCommissionState state = stateStore.getState(uuid);
