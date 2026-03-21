@@ -16,7 +16,7 @@ public class BalanceCommand implements BasicCommand {
     }
 
     public void register(Commands commands) {
-        commands.register("balance", "Check your coin balance", this);
+        commands.register("balance", "Check your Gold Coin balance", this);
     }
 
     @Override

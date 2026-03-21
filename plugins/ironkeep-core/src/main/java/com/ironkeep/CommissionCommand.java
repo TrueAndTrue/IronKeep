@@ -70,7 +70,8 @@ public class CommissionCommand implements BasicCommand {
         player.sendMessage(ChatColor.GOLD + "--- Available Commissions ---");
         for (CommissionDefinition def : all.values()) {
             player.sendMessage(ChatColor.YELLOW + def.getId()
-                    + ChatColor.GRAY + " — " + def.getDisplayName());
+                    + ChatColor.GRAY + " — " + def.getDisplayName()
+                    + ChatColor.GRAY + " (" + def.getDescription() + ")");
         }
     }
 
