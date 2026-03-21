@@ -9,6 +9,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class IronKeepPlugin extends JavaPlugin {
 
     private CommissionManager commissionManager;
+    private StarterKitManager starterKitManager;
 
     @SuppressWarnings("UnstableApiUsage")
     @Override
@@ -17,6 +18,12 @@ public class IronKeepPlugin extends JavaPlugin {
 
         commissionManager = new CommissionManager(this);
         commissionManager.load();
+
+        StarterKitConfig kitConfig = new StarterKitConfig(this);
+        kitConfig.load();
+        starterKitManager = new StarterKitManager(this, kitConfig);
+        starterKitManager.load();
+        getServer().getPluginManager().registerEvents(new StarterKitListener(starterKitManager), this);
 
         // Paper plugins register commands via the lifecycle manager, not paper-plugin.yml
         LifecycleEventManager<Plugin> manager = this.getLifecycleManager();

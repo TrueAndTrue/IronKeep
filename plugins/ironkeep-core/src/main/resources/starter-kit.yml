@@ -1,0 +1,28 @@
+# Starter Kit Configuration
+# Granted to players the FIRST time they ever join the server.
+#
+# Schema per entry:
+#   item:         (required) Bukkit Material name, e.g. IRON_HELMET
+#   quantity:     (required) How many of this item to give (integer, >= 1)
+#   display-name: (optional) Custom name shown on the item
+#   enchantments: (optional) List of enchantments to apply
+#     - enchantment: Bukkit enchantment key (lowercase), e.g. sharpness
+#       level:       Enchantment level (integer, >= 1)
+
+kit:
+  - item: IRON_HELMET
+    quantity: 1
+  - item: IRON_CHESTPLATE
+    quantity: 1
+  - item: IRON_LEGGINGS
+    quantity: 1
+  - item: IRON_BOOTS
+    quantity: 1
+  - item: WOODEN_SWORD
+    quantity: 1
+  - item: WOODEN_PICKAXE
+    quantity: 1
+  - item: WOODEN_AXE
+    quantity: 1
+  - item: WOODEN_HOE
+    quantity: 1
