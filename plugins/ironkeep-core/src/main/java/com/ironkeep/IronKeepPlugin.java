@@ -1,11 +1,16 @@
 package com.ironkeep;
 
+import io.papermc.paper.command.brigadier.Commands;
+import io.papermc.paper.plugin.lifecycle.event.LifecycleEventManager;
+import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class IronKeepPlugin extends JavaPlugin {
 
     private CommissionManager commissionManager;
 
+    @SuppressWarnings("UnstableApiUsage")
     @Override
     public void onEnable() {
         saveDefaultConfig();
@@ -13,8 +18,13 @@ public class IronKeepPlugin extends JavaPlugin {
         commissionManager = new CommissionManager(this);
         commissionManager.load();
 
-        getCommand("commission").setExecutor(new CommissionCommand(this));
-        getCommand("balance").setExecutor(new BalanceCommand(this));
+        // Paper plugins register commands via the lifecycle manager, not paper-plugin.yml
+        LifecycleEventManager<Plugin> manager = this.getLifecycleManager();
+        manager.registerEventHandler(LifecycleEvents.COMMANDS, event -> {
+            Commands commands = event.registrar();
+            new CommissionCommand(this).register(commands);
+            new BalanceCommand(this).register(commands);
+        });
 
         getLogger().info("IronKeep enabled.");
     }

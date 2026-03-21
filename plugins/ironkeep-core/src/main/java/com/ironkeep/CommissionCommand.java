@@ -1,16 +1,17 @@
 package com.ironkeep;
 
+import io.papermc.paper.command.brigadier.Commands;
+import io.papermc.paper.command.brigadier.BasicCommand;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.UUID;
 
-public class CommissionCommand implements CommandExecutor {
+@SuppressWarnings("UnstableApiUsage")
+public class CommissionCommand implements BasicCommand {
 
     private static final String PREFIX = ChatColor.GOLD + "[Commission] " + ChatColor.RESET;
 
@@ -20,16 +21,20 @@ public class CommissionCommand implements CommandExecutor {
         this.plugin = plugin;
     }
 
+    public void register(Commands commands) {
+        commands.register("commission", "Manage your commissions", this);
+    }
+
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage(ChatColor.RED + "Only players can use this command.");
-            return true;
+    public void execute(CommandSourceStack stack, String[] args) {
+        if (!(stack.getSender() instanceof Player player)) {
+            stack.getSender().sendMessage(ChatColor.RED + "Only players can use this command.");
+            return;
         }
 
         if (args.length == 0) {
             sendUsage(player);
-            return true;
+            return;
         }
 
         switch (args[0].toLowerCase()) {
@@ -38,7 +43,6 @@ public class CommissionCommand implements CommandExecutor {
             case "status" -> handleStatus(player);
             default -> sendUsage(player);
         }
-        return true;
     }
 
     private void handleNew(Player player) {
@@ -120,9 +124,9 @@ public class CommissionCommand implements CommandExecutor {
 
     private void sendUsage(Player player) {
         player.sendMessage(ChatColor.GOLD + "--- Commission Commands ---");
-        player.sendMessage(ChatColor.YELLOW + "/commission new" + ChatColor.GRAY + " - Get a new commission");
-        player.sendMessage(ChatColor.YELLOW + "/commission submit" + ChatColor.GRAY + " - Turn in your commission");
-        player.sendMessage(ChatColor.YELLOW + "/commission status" + ChatColor.GRAY + " - View active commission");
+        player.sendMessage(ChatColor.YELLOW + "/commission new" + ChatColor.GRAY + " — Get a new commission");
+        player.sendMessage(ChatColor.YELLOW + "/commission submit" + ChatColor.GRAY + " — Turn in your commission");
+        player.sendMessage(ChatColor.YELLOW + "/commission status" + ChatColor.GRAY + " — View active commission");
     }
 
     private int countItems(Player player, Material material) {
@@ -153,9 +157,8 @@ public class CommissionCommand implements CommandExecutor {
     }
 
     private String formatItem(String materialName) {
-        return materialName.replace('_', ' ').toLowerCase()
-                .substring(0, 1).toUpperCase()
-                + materialName.replace('_', ' ').toLowerCase().substring(1);
+        String lower = materialName.replace('_', ' ').toLowerCase();
+        return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
     }
 
     private String formatCoins(double amount) {

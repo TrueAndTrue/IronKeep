@@ -1,12 +1,13 @@
 package com.ironkeep;
 
+import io.papermc.paper.command.brigadier.Commands;
+import io.papermc.paper.command.brigadier.BasicCommand;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public class BalanceCommand implements CommandExecutor {
+@SuppressWarnings("UnstableApiUsage")
+public class BalanceCommand implements BasicCommand {
 
     private final IronKeepPlugin plugin;
 
@@ -14,11 +15,15 @@ public class BalanceCommand implements CommandExecutor {
         this.plugin = plugin;
     }
 
+    public void register(Commands commands) {
+        commands.register("balance", "Check your coin balance", this);
+    }
+
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage(ChatColor.RED + "Only players can use this command.");
-            return true;
+    public void execute(CommandSourceStack stack, String[] args) {
+        if (!(stack.getSender() instanceof Player player)) {
+            stack.getSender().sendMessage(ChatColor.RED + "Only players can use this command.");
+            return;
         }
 
         double balance = plugin.getCommissionManager().getBalance(player.getUniqueId());
@@ -30,6 +35,5 @@ public class BalanceCommand implements CommandExecutor {
         }
 
         player.sendMessage(ChatColor.GOLD + "Your balance: " + ChatColor.YELLOW + formatted);
-        return true;
     }
 }

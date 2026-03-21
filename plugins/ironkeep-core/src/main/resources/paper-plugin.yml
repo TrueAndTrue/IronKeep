@@ -4,11 +4,3 @@ main: com.ironkeep.IronKeepPlugin
 api-version: '1.21'
 description: IronKeep core plugin
 author: thete
-
-commands:
-  commission:
-    description: Manage your commissions
-    usage: /commission <new|submit|status>
-  balance:
-    description: Check your coin balance
-    usage: /balance
