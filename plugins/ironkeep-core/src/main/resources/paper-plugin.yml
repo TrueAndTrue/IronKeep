@@ -1,0 +1,6 @@
+name: IronKeep
+version: '${version}'
+main: com.ironkeep.IronKeepPlugin
+api-version: '1.21'
+description: IronKeep core plugin
+author: thete
