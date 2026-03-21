@@ -8,6 +8,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class IronKeepPlugin extends JavaPlugin {
 
+    private CommissionRegistry commissionRegistry;
+    private CurrencyManager currencyManager;
     private CommissionManager commissionManager;
     private StarterKitManager starterKitManager;
     private WardenManager wardenManager;
@@ -17,8 +19,16 @@ public class IronKeepPlugin extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
 
-        commissionManager = new CommissionManager(this);
-        commissionManager.load();
+        commissionRegistry = new CommissionRegistry(this);
+        commissionRegistry.load();
+
+        currencyManager = new CurrencyManager(this);
+        currencyManager.load();
+
+        CommissionStateStore stateStore = new CommissionStateStore(this);
+        stateStore.load();
+
+        commissionManager = new CommissionManager(commissionRegistry, stateStore, currencyManager);
 
         StarterKitConfig kitConfig = new StarterKitConfig(this);
         kitConfig.load();
@@ -30,7 +40,6 @@ public class IronKeepPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new WardenListener(this, wardenManager), this);
         getServer().getScheduler().runTaskLater(this, wardenManager::spawnWarden, 1L);
 
-        // Paper plugins register commands via the lifecycle manager, not paper-plugin.yml
         LifecycleEventManager<Plugin> manager = this.getLifecycleManager();
         manager.registerEventHandler(LifecycleEvents.COMMANDS, event -> {
             Commands commands = event.registrar();
@@ -43,10 +52,15 @@ public class IronKeepPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (commissionManager != null) {
-            commissionManager.save();
-        }
         getLogger().info("IronKeep disabled.");
+    }
+
+    public CommissionRegistry getCommissionRegistry() {
+        return commissionRegistry;
+    }
+
+    public CurrencyManager getCurrencyManager() {
+        return currencyManager;
     }
 
     public CommissionManager getCommissionManager() {

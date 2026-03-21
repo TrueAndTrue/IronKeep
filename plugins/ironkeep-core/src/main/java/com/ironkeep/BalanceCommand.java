@@ -1,8 +1,8 @@
 package com.ironkeep;
 
-import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.command.brigadier.BasicCommand;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
+import io.papermc.paper.command.brigadier.Commands;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
@@ -26,14 +26,14 @@ public class BalanceCommand implements BasicCommand {
             return;
         }
 
-        double balance = plugin.getCommissionManager().getBalance(player.getUniqueId());
-        String formatted;
-        if (balance == Math.floor(balance)) {
-            formatted = (long) balance + " coins";
-        } else {
-            formatted = String.format("%.2f coins", balance);
-        }
+        double balance = plugin.getCurrencyManager().getBalance(player.getUniqueId());
+        player.sendMessage(ChatColor.GOLD + "Your balance: " + ChatColor.YELLOW + formatCoins(balance));
+    }
 
-        player.sendMessage(ChatColor.GOLD + "Your balance: " + ChatColor.YELLOW + formatted);
+    private String formatCoins(double amount) {
+        if (amount == Math.floor(amount)) {
+            return (long) amount + " Gold Coins";
+        }
+        return String.format("%.2f Gold Coins", amount);
     }
 }
