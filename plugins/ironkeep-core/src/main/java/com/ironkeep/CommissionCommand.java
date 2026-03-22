@@ -72,7 +72,8 @@ public class CommissionCommand implements BasicCommand {
         player.sendMessage(ChatColor.GOLD + "  Task:     " + ChatColor.YELLOW + def.getDescription());
         player.sendMessage(ChatColor.GOLD + "  Progress: " + ChatColor.YELLOW
                 + state.getProgress() + "/" + def.getObjectiveQuantity());
-        player.sendMessage(ChatColor.GOLD + "  Reward:   " + ChatColor.YELLOW + formatCoins(def.getRewardAmount()));
+        player.sendMessage(ChatColor.GOLD + "  Reward:   " + ChatColor.YELLOW + formatCoins(def.getRewardAmount()) + " Gold Coins"
+                + (def.getShardsReward() > 0 ? ChatColor.GOLD + " + " + ChatColor.AQUA + formatCoins(def.getShardsReward()) + " Shards" : ""));
     }
 
     private void handleList(Player player) {

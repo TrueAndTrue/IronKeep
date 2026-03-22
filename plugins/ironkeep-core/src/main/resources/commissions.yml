@@ -9,7 +9,8 @@
 #   turn-in-item       - Item to have in INVENTORY when completing (e.g. COAL)
 #                        If omitted, falls back to objective-item
 #   objective-quantity - Number required
-#   reward-amount      - Gold Coins on completion
+#   reward-amount      - Gold Coins on completion (non-tradeable)
+#   shards-reward      - Shards on completion (tradeable). Defaults to 0 if omitted.
 
 commissions:
 
@@ -23,6 +24,7 @@ commissions:
     turn-in-item: COAL
     objective-quantity: 2
     reward-amount: 40.0
+    shards-reward: 40.0
 
   mining_iron:
     type: MINING
@@ -32,6 +34,7 @@ commissions:
     turn-in-item: RAW_IRON
     objective-quantity: 2
     reward-amount: 100.0
+    shards-reward: 100.0
 
   mining_gold:
     type: MINING
@@ -41,6 +44,7 @@ commissions:
     turn-in-item: RAW_GOLD
     objective-quantity: 2
     reward-amount: 150.0
+    shards-reward: 150.0
 
   mining_diamond:
     type: MINING
@@ -50,6 +54,7 @@ commissions:
     turn-in-item: DIAMOND
     objective-quantity: 2
     reward-amount: 500.0
+    shards-reward: 500.0
 
   # --- Woodcutting ---
 
@@ -60,6 +65,7 @@ commissions:
     objective-item: OAK_LOG
     objective-quantity: 2
     reward-amount: 75.0
+    shards-reward: 75.0
 
   woodcutting_birch:
     type: WOODCUTTING
@@ -68,6 +74,7 @@ commissions:
     objective-item: BIRCH_LOG
     objective-quantity: 2
     reward-amount: 55.0
+    shards-reward: 55.0
 
   # --- Farming ---
 
@@ -78,3 +85,4 @@ commissions:
     objective-item: WHEAT
     objective-quantity: 2
     reward-amount: 50.0
+    shards-reward: 50.0

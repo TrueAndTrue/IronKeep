@@ -159,11 +159,21 @@ public class CommissionManager {
         }
         player.getInventory().removeItem(new ItemStack(material, needed));
         currencyManager.addBalance(uuid, def.getRewardAmount());
+        if (def.getShardsReward() > 0) {
+            currencyManager.addShards(uuid, def.getShardsReward());
+        }
         stateStore.clearState(uuid);
-        player.sendMessage(PREFIX + ChatColor.GREEN + "Commission complete! You earned "
-                + ChatColor.YELLOW + formatCoins(def.getRewardAmount()) + ChatColor.GREEN + ".");
-        player.sendMessage(ChatColor.GOLD + "  Balance: "
-                + ChatColor.YELLOW + formatCoins(currencyManager.getBalance(uuid)));
+
+        // Build reward message
+        String rewardMsg = ChatColor.YELLOW + formatCoins(def.getRewardAmount()) + " Gold Coins";
+        if (def.getShardsReward() > 0) {
+            rewardMsg += ChatColor.GREEN + " and " + ChatColor.AQUA + formatCoins(def.getShardsReward()) + " Shards";
+        }
+        player.sendMessage(PREFIX + ChatColor.GREEN + "Commission complete! You earned " + rewardMsg + ChatColor.GREEN + ".");
+        player.sendMessage(ChatColor.GOLD + "  Gold Coins: " + ChatColor.YELLOW + formatCoins(currencyManager.getBalance(uuid)));
+        if (def.getShardsReward() > 0) {
+            player.sendMessage(ChatColor.AQUA + "  Shards:     " + ChatColor.WHITE + formatCoins(currencyManager.getShards(uuid)));
+        }
     }
 
     private int countItem(Player player, Material material) {

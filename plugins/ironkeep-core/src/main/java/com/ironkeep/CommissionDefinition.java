@@ -9,10 +9,12 @@ public class CommissionDefinition {
     private final String objectiveItem;   // Block/action to track progress (e.g. COAL_ORE)
     private final String turnInItem;      // Item to hand in for completion (e.g. COAL). Falls back to objectiveItem if null.
     private final int objectiveQuantity;
-    private final double rewardAmount;
+    private final double rewardAmount;    // Gold Coins reward (non-tradeable)
+    private final double shardsReward;    // Shards reward (tradeable). Defaults to 0 if not set.
 
     public CommissionDefinition(String id, String type, String displayName, String description,
-                                String objectiveItem, String turnInItem, int objectiveQuantity, double rewardAmount) {
+                                String objectiveItem, String turnInItem, int objectiveQuantity,
+                                double rewardAmount, double shardsReward) {
         this.id = id;
         this.type = type;
         this.displayName = displayName;
@@ -21,6 +23,7 @@ public class CommissionDefinition {
         this.turnInItem = (turnInItem != null && !turnInItem.isEmpty()) ? turnInItem : objectiveItem;
         this.objectiveQuantity = objectiveQuantity;
         this.rewardAmount = rewardAmount;
+        this.shardsReward = shardsReward;
     }
 
     public String getId() { return id; }
@@ -31,4 +34,5 @@ public class CommissionDefinition {
     public String getTurnInItem() { return turnInItem; }
     public int getObjectiveQuantity() { return objectiveQuantity; }
     public double getRewardAmount() { return rewardAmount; }
+    public double getShardsReward() { return shardsReward; }
 }
