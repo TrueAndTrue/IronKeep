@@ -21,6 +21,18 @@ woodcutting:
       y: 256
       z: 100
 
+mining:
+  region:
+    enabled: false
+    min:
+      x: -100
+      y: 0
+      z: -100
+    max:
+      x: 100
+      y: 256
+      z: 100
+
 new-player-spawn:
   world: world
   x: -7.0

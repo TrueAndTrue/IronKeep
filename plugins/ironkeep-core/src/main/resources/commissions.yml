@@ -5,8 +5,9 @@
 #   type               - Category for display (MINING, WOODCUTTING, FARMING, etc.)
 #   display-name       - Human-readable name shown in-game
 #   description        - Short flavour text describing the commission
-#   objective-item     - Bukkit Material name (e.g. IRON_ORE) or action key
-#   objective-quantity - Number of items/actions required to complete
+#   objective-item     - Bukkit Material name of the BLOCK to break (e.g. COAL_ORE, OAK_LOG)
+#                        For Mining: use the ore block name, not the drop (e.g. COAL_ORE not COAL)
+#   objective-quantity - Number of blocks required to complete
 #   reward-amount      - Gold Coins awarded on completion
 
 commissions:
@@ -17,8 +18,8 @@ commissions:
     type: MINING
     display-name: "Coal Haul"
     description: "Mine coal ore for the smelters."
-    objective-item: COAL
-    objective-quantity: 2
+    objective-item: COAL_ORE
+    objective-quantity: 16
     reward-amount: 40.0
 
   mining_iron:
@@ -26,7 +27,7 @@ commissions:
     display-name: "Iron Rush"
     description: "Mine iron ore for the blacksmith."
     objective-item: IRON_ORE
-    objective-quantity: 2
+    objective-quantity: 16
     reward-amount: 100.0
 
   mining_gold:
@@ -34,15 +35,15 @@ commissions:
     display-name: "Gold Fever"
     description: "Mine gold ore for the treasury."
     objective-item: GOLD_ORE
-    objective-quantity: 2
+    objective-quantity: 8
     reward-amount: 150.0
 
   mining_diamond:
     type: MINING
     display-name: "Diamond Expedition"
     description: "Retrieve diamonds for the guild vault."
-    objective-item: DIAMOND
-    objective-quantity: 2
+    objective-item: DIAMOND_ORE
+    objective-quantity: 5
     reward-amount: 500.0
 
   # --- Woodcutting ---
@@ -52,7 +53,7 @@ commissions:
     display-name: "Lumber Run"
     description: "Chop oak logs for the carpenter."
     objective-item: OAK_LOG
-    objective-quantity: 2
+    objective-quantity: 16
     reward-amount: 75.0
 
   woodcutting_birch:
@@ -60,7 +61,7 @@ commissions:
     display-name: "Birch Bundle"
     description: "Gather birch logs for the fletcher."
     objective-item: BIRCH_LOG
-    objective-quantity: 2
+    objective-quantity: 16
     reward-amount: 55.0
 
   # --- Farming ---
@@ -70,6 +71,5 @@ commissions:
     display-name: "Wheat Harvest"
     description: "Harvest wheat for the baker."
     objective-item: WHEAT
-    objective-quantity: 2
+    objective-quantity: 32
     reward-amount: 50.0
-
