@@ -1,7 +1,9 @@
 package com.ironkeep;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.UUID;
 
@@ -137,12 +139,36 @@ public class CommissionManager {
                     + ChatColor.RED + " (" + remaining + " remaining).");
             return;
         }
+        Material material = Material.matchMaterial(def.getObjectiveItem());
+        if (material == null) {
+            player.sendMessage(PREFIX + ChatColor.RED + "Commission item is misconfigured. Contact an admin.");
+            return;
+        }
+        int needed = def.getObjectiveQuantity();
+        int inInventory = countItem(player, material);
+        if (inInventory < needed) {
+            player.sendMessage(PREFIX + ChatColor.RED + "You don't have the required items. Need "
+                    + ChatColor.YELLOW + needed + "x " + formatItem(def.getObjectiveItem())
+                    + ChatColor.RED + " but only have " + inInventory + ".");
+            return;
+        }
+        player.getInventory().removeItem(new ItemStack(material, needed));
         currencyManager.addBalance(uuid, def.getRewardAmount());
         stateStore.clearState(uuid);
         player.sendMessage(PREFIX + ChatColor.GREEN + "Commission complete! You earned "
                 + ChatColor.YELLOW + formatCoins(def.getRewardAmount()) + ChatColor.GREEN + ".");
         player.sendMessage(ChatColor.GOLD + "  Balance: "
                 + ChatColor.YELLOW + formatCoins(currencyManager.getBalance(uuid)));
+    }
+
+    private int countItem(Player player, Material material) {
+        int count = 0;
+        for (ItemStack stack : player.getInventory().getContents()) {
+            if (stack != null && stack.getType() == material) {
+                count += stack.getAmount();
+            }
+        }
+        return count;
     }
 
     private String formatItem(String materialName) {

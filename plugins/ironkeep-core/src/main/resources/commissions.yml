@@ -73,10 +73,3 @@ commissions:
     objective-quantity: 2
     reward-amount: 50.0
 
-  farming_beef:
-    type: FARMING
-    display-name: "Butcher's Order"
-    description: "Gather cooked beef for the inn."
-    objective-item: COOKED_BEEF
-    objective-quantity: 2
-    reward-amount: 60.0
