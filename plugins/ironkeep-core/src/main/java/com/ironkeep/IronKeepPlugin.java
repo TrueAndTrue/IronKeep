@@ -15,6 +15,7 @@ public class IronKeepPlugin extends JavaPlugin {
     private StarterKitManager starterKitManager;
     private WardenManager wardenManager;
     private RankManager rankManager;
+    private EscapeManager escapeManager;
 
     @SuppressWarnings("UnstableApiUsage")
     @Override
@@ -27,6 +28,9 @@ public class IronKeepPlugin extends JavaPlugin {
         rankManager = new RankManager(this);
         rankManager.load();
 
+        escapeManager = new EscapeManager(this);
+        escapeManager.load();
+
         currencyManager = new CurrencyManager(this);
         currencyManager.load();
 
@@ -35,6 +39,7 @@ public class IronKeepPlugin extends JavaPlugin {
 
         commissionManager = new CommissionManager(commissionRegistry, stateStore, currencyManager);
         commissionManager.setRankManager(rankManager);
+        commissionManager.setEscapeManager(escapeManager);
 
         commissionBoardManager = new CommissionBoardManager(this);
         commissionBoardManager.load();
@@ -63,6 +68,7 @@ public class IronKeepPlugin extends JavaPlugin {
             new PayCommand(this).register(commands);
             new RankUpCommand(this).register(commands);
             new RankCommand(this).register(commands);
+            new EscapeCommand(this).register(commands);
             new RemoveTargetCommand().register(commands);
         });
 
@@ -92,5 +98,9 @@ public class IronKeepPlugin extends JavaPlugin {
 
     public RankManager getRankManager() {
         return rankManager;
+    }
+
+    public EscapeManager getEscapeManager() {
+        return escapeManager;
     }
 }

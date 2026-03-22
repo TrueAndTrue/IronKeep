@@ -1,0 +1,25 @@
+# IronKeep Escape (Prestige) Level Definitions
+# Players at Rank 4 can /escape to reset rank in exchange for a permanent Gold Coin income bonus.
+# Shards are NEVER affected by escaping.
+#
+# Fields:
+#   level         - Escape level number
+#   cost          - Gold Coins required to escape to this level
+#   bonus-percent - Permanent % bonus to all Gold Coin income (Shards unaffected)
+
+escapes:
+
+  escape1:
+    level: 1
+    cost: 600
+    bonus-percent: 10
+
+  escape2:
+    level: 2
+    cost: 700
+    bonus-percent: 20
+
+  escape3:
+    level: 3
+    cost: 800
+    bonus-percent: 30

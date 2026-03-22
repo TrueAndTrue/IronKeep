@@ -49,7 +49,17 @@ public class RankCommand implements BasicCommand {
             player.sendMessage(ChatColor.GOLD + "  Next Rank: " + ChatColor.YELLOW + nextDef.getDisplayName()
                     + ChatColor.GRAY + " (costs " + format(nextDef.getCost()) + " Gold Coins)");
         } else {
-            player.sendMessage(ChatColor.GOLD + "  Next Rank: " + ChatColor.GRAY + "Max rank reached");
+            player.sendMessage(ChatColor.GOLD + "  Next Rank: " + ChatColor.GRAY + "Max rank reached — use /escape to prestige!");
+        }
+
+        // Escape level info
+        EscapeManager escapeManager = plugin.getEscapeManager();
+        if (escapeManager != null) {
+            int escapeLevel = escapeManager.getEscapeLevel(uuid);
+            int maxEscape = escapeManager.getMaxEscapeLevel();
+            int bonusPct = (int) ((escapeManager.getGoldCoinMultiplier(uuid) - 1.0) * 100);
+            player.sendMessage(ChatColor.LIGHT_PURPLE + "  Escape Lvl: " + ChatColor.WHITE + escapeLevel + "/" + maxEscape
+                    + (bonusPct > 0 ? ChatColor.GRAY + " (+" + bonusPct + "% Gold Coin bonus)" : ""));
         }
     }
 

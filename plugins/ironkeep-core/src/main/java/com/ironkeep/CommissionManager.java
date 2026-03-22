@@ -14,7 +14,8 @@ public class CommissionManager {
     private final CommissionRegistry registry;
     private final CommissionStateStore stateStore;
     private final CurrencyManager currencyManager;
-    private RankManager rankManager; // set after construction to avoid circular dependency
+    private RankManager rankManager;     // set after construction to avoid circular dependency
+    private EscapeManager escapeManager; // set after construction
 
     public CommissionManager(CommissionRegistry registry, CommissionStateStore stateStore,
                              CurrencyManager currencyManager) {
@@ -25,6 +26,10 @@ public class CommissionManager {
 
     public void setRankManager(RankManager rankManager) {
         this.rankManager = rankManager;
+    }
+
+    public void setEscapeManager(EscapeManager escapeManager) {
+        this.escapeManager = escapeManager;
     }
 
     public void assignCommission(Player player, String commissionId) {
@@ -179,16 +184,27 @@ public class CommissionManager {
             return;
         }
         player.getInventory().removeItem(new ItemStack(material, needed));
-        currencyManager.addBalance(uuid, def.getRewardAmount());
+
+        // Apply escape bonus to Gold Coins only (Shards are unaffected)
+        double goldReward = def.getRewardAmount();
+        if (escapeManager != null) {
+            goldReward = escapeManager.applyBonus(uuid, goldReward);
+        }
+        currencyManager.addBalance(uuid, goldReward);
         if (def.getShardsReward() > 0) {
             currencyManager.addShards(uuid, def.getShardsReward());
         }
         stateStore.clearState(uuid);
 
         // Build reward message
-        String rewardMsg = ChatColor.YELLOW + formatCoins(def.getRewardAmount()) + " Gold Coins";
+        String rewardMsg = ChatColor.YELLOW + formatCoins(goldReward) + " Gold Coins";
         if (def.getShardsReward() > 0) {
             rewardMsg += ChatColor.GREEN + " and " + ChatColor.AQUA + formatCoins(def.getShardsReward()) + " Shards";
+        }
+        // Mention escape bonus if applicable
+        if (escapeManager != null && escapeManager.getEscapeLevel(uuid) > 0) {
+            int bonusPct = (int) ((escapeManager.getGoldCoinMultiplier(uuid) - 1.0) * 100);
+            rewardMsg += ChatColor.GRAY + " (+" + bonusPct + "% escape bonus)";
         }
         player.sendMessage(PREFIX + ChatColor.GREEN + "Commission complete! You earned " + rewardMsg + ChatColor.GREEN + ".");
         player.sendMessage(ChatColor.GOLD + "  Gold Coins: " + ChatColor.YELLOW + formatCoins(currencyManager.getBalance(uuid)));

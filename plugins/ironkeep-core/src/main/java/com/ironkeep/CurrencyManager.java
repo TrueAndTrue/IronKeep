@@ -98,6 +98,12 @@ public class CurrencyManager {
         save();
     }
 
+    /** Sets Gold Coins balance to an exact value (minimum 0). */
+    public void setBalance(UUID uuid, double amount) {
+        goldCoins.put(uuid, Math.max(0.0, amount));
+        save();
+    }
+
     // -------------------------------------------------------------------------
     // Shards API (tradeable)
     // -------------------------------------------------------------------------
