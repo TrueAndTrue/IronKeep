@@ -23,10 +23,10 @@ public class MiningListener implements Listener {
         Player player = event.getPlayer();
         CommissionManager commissionManager = plugin.getCommissionManager();
 
-        // Check player has an active MINING commission
+        // Check player has an active MINING commission (any mining type key)
         if (!commissionManager.hasActiveCommission(player)) return;
         CommissionDefinition def = commissionManager.getActiveCommission(player);
-        if (def == null || !def.getType().equalsIgnoreCase("MINING")) return;
+        if (def == null || !def.getType().toUpperCase().startsWith("MINING")) return;
 
         // Resolve the objective material and its deepslate variant
         Material requiredMaterial;

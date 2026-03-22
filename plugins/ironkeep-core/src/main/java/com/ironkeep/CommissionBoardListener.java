@@ -123,8 +123,12 @@ public class CommissionBoardListener implements Listener {
             gui.setItem(15, completeBtn);
 
         } else {
-            // Show all available commissions
-            Map<String, CommissionDefinition> all = plugin.getCommissionRegistry().getAll();
+            // Show commissions filtered by player's rank
+            java.util.List<CommissionDefinition> rankFiltered = plugin.getRankManager() != null
+                    ? plugin.getRankManager().getAccessibleCommissions(player.getUniqueId())
+                    : new java.util.ArrayList<>(plugin.getCommissionRegistry().getAll().values());
+            Map<String, CommissionDefinition> all = new java.util.LinkedHashMap<>();
+            for (CommissionDefinition c : rankFiltered) all.put(c.getId(), c);
             int slot = 10;
             for (CommissionDefinition def : all.values()) {
                 if (slot >= GUI_SIZE - 4) break;
