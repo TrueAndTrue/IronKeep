@@ -67,6 +67,7 @@ public class IronKeepPlugin extends JavaPlugin {
         wardenManager = new WardenManager(this);
         getServer().getPluginManager().registerEvents(new WardenListener(this, wardenManager), this);
         getServer().getScheduler().runTaskLater(this, wardenManager::spawnWarden, 20L);
+        getServer().getScheduler().runTaskLater(this, zoneManager::placeBorders, 20L);
 
         LifecycleEventManager<Plugin> manager = this.getLifecycleManager();
         manager.registerEventHandler(LifecycleEvents.COMMANDS, event -> {

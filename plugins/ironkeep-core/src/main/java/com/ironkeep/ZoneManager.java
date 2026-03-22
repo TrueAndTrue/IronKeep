@@ -1,6 +1,9 @@
 package com.ironkeep;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -47,7 +50,10 @@ public class ZoneManager {
             int x2 = entry.getInt("x2"), z2 = entry.getInt("z2");
             int yMin = entry.getInt("y-min", -64), yMax = entry.getInt("y-max", 320);
             List<String> types = entry.getStringList("commission-types");
-            zones.add(new Zone(key, world, x1, z1, x2, z2, yMin, yMax, types));
+            int borderY = entry.getInt("border-y", Integer.MIN_VALUE);
+            Zone zone = new Zone(key, world, x1, z1, x2, z2, yMin, yMax, types);
+            zone.setBorderY(borderY);
+            zones.add(zone);
         }
         plugin.getLogger().info("ZoneManager: loaded " + zones.size() + " zone(s).");
     }
@@ -71,6 +77,38 @@ public class ZoneManager {
         // No zone at this location — fall back to config setting
         if (!anyZoneForType) return !blockWithoutZone;
         return false;
+    }
+
+    /**
+     * Places Obsidian border rings for any zones that have a border-y configured.
+     * Should be called one tick after world load.
+     */
+    public void placeBorders() {
+        for (Zone zone : zones) {
+            if (zone.getBorderY() == Integer.MIN_VALUE) continue;
+            World world = Bukkit.getWorld(zone.getWorld());
+            if (world == null) {
+                plugin.getLogger().warning("ZoneManager: world '" + zone.getWorld() + "' not found for border placement.");
+                continue;
+            }
+            int y = zone.getBorderY();
+            int minX = Math.min(zone.getX1(), zone.getX2());
+            int maxX = Math.max(zone.getX1(), zone.getX2());
+            int minZ = Math.min(zone.getZ1(), zone.getZ2());
+            int maxZ = Math.max(zone.getZ1(), zone.getZ2());
+
+            int count = 0;
+            for (int x = minX; x <= maxX; x++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    // Only place on the perimeter
+                    if (x == minX || x == maxX || z == minZ || z == maxZ) {
+                        world.getBlockAt(x, y, z).setType(Material.OBSIDIAN);
+                        count++;
+                    }
+                }
+            }
+            plugin.getLogger().info("ZoneManager: placed " + count + " Obsidian border blocks for zone '" + zone.getId() + "' at Y=" + y);
+        }
     }
 
     /** Returns all zones that apply to a given commission type. */

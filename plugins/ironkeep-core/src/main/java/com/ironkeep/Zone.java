@@ -12,6 +12,7 @@ public class Zone {
     private final int x1, z1, x2, z2;
     private final int yMin, yMax;
     private final List<String> commissionTypes; // type keys valid in this zone
+    private int borderY = Integer.MIN_VALUE;    // Y level for Obsidian border ring (optional)
 
     public Zone(String id, String world, int x1, int z1, int x2, int z2,
                 int yMin, int yMax, List<String> commissionTypes) {
@@ -26,6 +27,9 @@ public class Zone {
         this.commissionTypes = commissionTypes;
     }
 
+    public void setBorderY(int borderY) { this.borderY = borderY; }
+    public int getBorderY() { return borderY; }
+
     public boolean contains(String worldName, int x, int y, int z) {
         if (!world.equals(worldName)) return false;
         return x >= x1 && x <= x2 && z >= z1 && z <= z2 && y >= yMin && y <= yMax;
@@ -37,5 +41,9 @@ public class Zone {
 
     public String getId() { return id; }
     public String getWorld() { return world; }
+    public int getX1() { return x1; }
+    public int getX2() { return x2; }
+    public int getZ1() { return z1; }
+    public int getZ2() { return z2; }
     public List<String> getCommissionTypes() { return commissionTypes; }
 }
