@@ -28,11 +28,15 @@ public class WardenManager {
             return;
         }
 
+        int removed = 0;
         for (Entity entity : location.getWorld().getEntities()) {
             if (isWarden(entity)) {
-                plugin.getLogger().info("WardenManager: existing warden found, skipping spawn.");
-                return;
+                entity.remove();
+                removed++;
             }
+        }
+        if (removed > 0) {
+            plugin.getLogger().info("WardenManager: removed " + removed + " existing warden(s).");
         }
 
         spawnNpc(location);

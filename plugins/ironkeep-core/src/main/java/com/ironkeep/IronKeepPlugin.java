@@ -41,18 +41,19 @@ public class IronKeepPlugin extends JavaPlugin {
         kitConfig.load();
         starterKitManager = new StarterKitManager(this, kitConfig);
         starterKitManager.load();
-        getServer().getPluginManager().registerEvents(new StarterKitListener(starterKitManager), this);
+        getServer().getPluginManager().registerEvents(new StarterKitListener(this, starterKitManager), this);
         getServer().getPluginManager().registerEvents(new WoodcuttingListener(this), this);
 
         wardenManager = new WardenManager(this);
         getServer().getPluginManager().registerEvents(new WardenListener(this, wardenManager), this);
-        getServer().getScheduler().runTaskLater(this, wardenManager::spawnWarden, 1L);
+        getServer().getScheduler().runTaskLater(this, wardenManager::spawnWarden, 20L);
 
         LifecycleEventManager<Plugin> manager = this.getLifecycleManager();
         manager.registerEventHandler(LifecycleEvents.COMMANDS, event -> {
             Commands commands = event.registrar();
             new CommissionCommand(this).register(commands);
             new BalanceCommand(this).register(commands);
+            new RemoveTargetCommand().register(commands);
         });
 
         getLogger().info("IronKeep enabled.");

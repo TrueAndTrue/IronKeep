@@ -25,7 +25,7 @@ if exist "%SERVER%\world\stats\%UUID%.json" del "%SERVER%\world\stats\%UUID%.jso
 if exist "%PLUGIN%\received-kits.yml" del "%PLUGIN%\received-kits.yml"
 if exist "%PLUGIN%\warden-seen.yml" del "%PLUGIN%\warden-seen.yml"
 if exist "%PLUGIN%\balances.yml" del "%PLUGIN%\balances.yml"
-if exist "%PLUGIN%\commissions.yml" del "%PLUGIN%\commissions.yml"
+if exist "%PLUGIN%\player-commissions.yml" del "%PLUGIN%\player-commissions.yml"
 
 echo Done! Player data and plugin data reset.
 pause

@@ -18,7 +18,7 @@ commissions:
     display-name: "Coal Haul"
     description: "Mine coal ore for the smelters."
     objective-item: COAL
-    objective-quantity: 64
+    objective-quantity: 2
     reward-amount: 40.0
 
   mining_iron:
@@ -26,7 +26,7 @@ commissions:
     display-name: "Iron Rush"
     description: "Mine iron ore for the blacksmith."
     objective-item: IRON_ORE
-    objective-quantity: 32
+    objective-quantity: 2
     reward-amount: 100.0
 
   mining_gold:
@@ -34,7 +34,7 @@ commissions:
     display-name: "Gold Fever"
     description: "Mine gold ore for the treasury."
     objective-item: GOLD_ORE
-    objective-quantity: 16
+    objective-quantity: 2
     reward-amount: 150.0
 
   mining_diamond:
@@ -42,7 +42,7 @@ commissions:
     display-name: "Diamond Expedition"
     description: "Retrieve diamonds for the guild vault."
     objective-item: DIAMOND
-    objective-quantity: 5
+    objective-quantity: 2
     reward-amount: 500.0
 
   # --- Woodcutting ---
@@ -52,7 +52,7 @@ commissions:
     display-name: "Lumber Run"
     description: "Chop oak logs for the carpenter."
     objective-item: OAK_LOG
-    objective-quantity: 128
+    objective-quantity: 2
     reward-amount: 75.0
 
   woodcutting_birch:
@@ -60,7 +60,7 @@ commissions:
     display-name: "Birch Bundle"
     description: "Gather birch logs for the fletcher."
     objective-item: BIRCH_LOG
-    objective-quantity: 64
+    objective-quantity: 2
     reward-amount: 55.0
 
   # --- Farming ---
@@ -70,7 +70,7 @@ commissions:
     display-name: "Wheat Harvest"
     description: "Harvest wheat for the baker."
     objective-item: WHEAT
-    objective-quantity: 64
+    objective-quantity: 2
     reward-amount: 50.0
 
   farming_beef:
@@ -78,5 +78,5 @@ commissions:
     display-name: "Butcher's Order"
     description: "Gather cooked beef for the inn."
     objective-item: COOKED_BEEF
-    objective-quantity: 32
+    objective-quantity: 2
     reward-amount: 60.0

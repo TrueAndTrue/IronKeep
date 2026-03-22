@@ -2,7 +2,7 @@ warden:
   spawn:
     world: world
     x: 0.5
-    y: 64.0
+    y: 71.0
     z: 0.5
     yaw: 0.0
     pitch: 0.0
@@ -20,6 +20,14 @@ woodcutting:
       x: 100
       y: 256
       z: 100
+
+new-player-spawn:
+  world: world
+  x: -7.0
+  y: 71.0
+  z: -2.0
+  yaw: 0.0
+  pitch: 0.0
 
 commission-board:
   block-type: OAK_WALL_SIGN

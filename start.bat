@@ -10,6 +10,7 @@ if %errorlevel% neq 0 (
 
 echo Copying config...
 copy /Y "%~dp0plugins\ironkeep-core\src\main\resources\config.yml" "%~dp0server\plugins\IronKeep\config.yml"
+copy /Y "%~dp0plugins\ironkeep-core\src\main\resources\commissions.yml" "%~dp0server\plugins\IronKeep\commissions.yml"
 
 echo Starting server...
 cd /d "%~dp0server"
