@@ -55,6 +55,7 @@ public class IronKeepPlugin extends JavaPlugin {
             Commands commands = event.registrar();
             new CommissionCommand(this).register(commands);
             new BalanceCommand(this).register(commands);
+            new PayCommand(this).register(commands);
             new RemoveTargetCommand().register(commands);
         });
 
