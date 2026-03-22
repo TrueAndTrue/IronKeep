@@ -14,12 +14,17 @@ public class CommissionManager {
     private final CommissionRegistry registry;
     private final CommissionStateStore stateStore;
     private final CurrencyManager currencyManager;
+    private RankManager rankManager; // set after construction to avoid circular dependency
 
     public CommissionManager(CommissionRegistry registry, CommissionStateStore stateStore,
                              CurrencyManager currencyManager) {
         this.registry = registry;
         this.stateStore = stateStore;
         this.currencyManager = currencyManager;
+    }
+
+    public void setRankManager(RankManager rankManager) {
+        this.rankManager = rankManager;
     }
 
     public void assignCommission(Player player, String commissionId) {
@@ -33,6 +38,12 @@ public class CommissionManager {
             player.sendMessage(PREFIX + ChatColor.RED + "Unknown commission: " + commissionId);
             return;
         }
+        // Rank access check
+        if (rankManager != null && !rankManager.canAccept(player.getUniqueId(), def.getType())) {
+            player.sendMessage(PREFIX + ChatColor.RED
+                    + "Your rank does not permit this commission type.");
+            return;
+        }
         UUID uuid = player.getUniqueId();
         PlayerCommissionState state = new PlayerCommissionState(uuid);
         state.setActiveCommissionId(def.getId());
@@ -42,18 +53,28 @@ public class CommissionManager {
                 + def.getDisplayName() + " — " + def.getDescription());
     }
 
+    /** Cancels a player's active commission without reward. */
+    public void cancelCommission(UUID uuid) {
+        stateStore.clearState(uuid);
+    }
+
     public void assignCommission(Player player) {
         if (hasActiveCommission(player)) {
             player.sendMessage(PREFIX + ChatColor.RED + "You already have an active commission. "
                     + "Use " + ChatColor.YELLOW + "/commission status" + ChatColor.RED + " to view it.");
             return;
         }
-        CommissionDefinition def = registry.getRandom();
+        // Pick a random commission from rank-accessible pool
+        UUID uuid = player.getUniqueId();
+        java.util.List<CommissionDefinition> accessible = rankManager != null
+                ? rankManager.getAccessibleCommissions(uuid)
+                : new java.util.ArrayList<>(registry.getAll().values());
+        CommissionDefinition def = accessible.isEmpty() ? null
+                : accessible.get(new java.util.Random().nextInt(accessible.size()));
         if (def == null) {
             player.sendMessage(PREFIX + ChatColor.RED + "No commissions are available right now.");
             return;
         }
-        UUID uuid = player.getUniqueId();
         PlayerCommissionState state = new PlayerCommissionState(uuid);
         state.setActiveCommissionId(def.getId());
         state.setProgress(0);

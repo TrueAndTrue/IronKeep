@@ -2,7 +2,8 @@
 # Add or modify commissions here. Changes take effect on server restart.
 #
 # Fields:
-#   type               - Category (MINING, WOODCUTTING, FARMING)
+#   type               - Category key used for rank access control and progress tracking
+#                        Must match an entry in ranks.yml unlocked-types list
 #   display-name       - Name shown to player
 #   description        - Short objective description
 #   objective-item     - Block to BREAK for progress tracking (e.g. COAL_ORE)
@@ -14,10 +15,10 @@
 
 commissions:
 
-  # --- Mining ---
+  # --- Mining (Coal) — Rank 1 ---
 
   mining_coal:
-    type: MINING
+    type: MINING_COAL
     display-name: "Coal Haul"
     description: "Mine 2 coal ore for the smelters."
     objective-item: COAL_ORE
@@ -26,37 +27,7 @@ commissions:
     reward-amount: 40.0
     shards-reward: 40.0
 
-  mining_iron:
-    type: MINING
-    display-name: "Iron Rush"
-    description: "Mine 2 iron ore for the blacksmith."
-    objective-item: IRON_ORE
-    turn-in-item: RAW_IRON
-    objective-quantity: 2
-    reward-amount: 100.0
-    shards-reward: 100.0
-
-  mining_gold:
-    type: MINING
-    display-name: "Gold Fever"
-    description: "Mine 2 gold ore for the treasury."
-    objective-item: GOLD_ORE
-    turn-in-item: RAW_GOLD
-    objective-quantity: 2
-    reward-amount: 150.0
-    shards-reward: 150.0
-
-  mining_diamond:
-    type: MINING
-    display-name: "Diamond Expedition"
-    description: "Retrieve 2 diamonds for the guild vault."
-    objective-item: DIAMOND_ORE
-    turn-in-item: DIAMOND
-    objective-quantity: 2
-    reward-amount: 500.0
-    shards-reward: 500.0
-
-  # --- Woodcutting ---
+  # --- Woodcutting — Rank 2 ---
 
   woodcutting_oak:
     type: WOODCUTTING
@@ -76,7 +47,7 @@ commissions:
     reward-amount: 55.0
     shards-reward: 55.0
 
-  # --- Farming ---
+  # --- Farming — Rank 3 ---
 
   farming_wheat:
     type: FARMING
@@ -86,3 +57,35 @@ commissions:
     objective-quantity: 2
     reward-amount: 50.0
     shards-reward: 50.0
+
+  # --- Mining (Advanced) — Rank 4 ---
+
+  mining_iron:
+    type: MINING_IRON
+    display-name: "Iron Rush"
+    description: "Mine 2 iron ore for the blacksmith."
+    objective-item: IRON_ORE
+    turn-in-item: RAW_IRON
+    objective-quantity: 2
+    reward-amount: 100.0
+    shards-reward: 100.0
+
+  mining_gold:
+    type: MINING_GOLD
+    display-name: "Gold Fever"
+    description: "Mine 2 gold ore for the treasury."
+    objective-item: GOLD_ORE
+    turn-in-item: RAW_GOLD
+    objective-quantity: 2
+    reward-amount: 150.0
+    shards-reward: 150.0
+
+  mining_diamond:
+    type: MINING_DIAMOND
+    display-name: "Diamond Expedition"
+    description: "Retrieve 2 diamonds for the guild vault."
+    objective-item: DIAMOND_ORE
+    turn-in-item: DIAMOND
+    objective-quantity: 2
+    reward-amount: 500.0
+    shards-reward: 500.0

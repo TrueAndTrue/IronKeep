@@ -1,0 +1,41 @@
+# IronKeep Rank Definitions
+# Ranks control which commission types a player can see and accept.
+# Changes take effect on server restart.
+#
+# Fields:
+#   rank           - Rank number (1 = starting rank)
+#   display-name   - Name shown to players
+#   cost           - Gold Coins required to rank up TO this rank (0 = free/starting rank)
+#   unlocked-types - Commission type keys available at this rank
+
+ranks:
+
+  rank1:
+    rank: 1
+    display-name: "Inmate"
+    cost: 0
+    unlocked-types:
+      - MINING_COAL   # Coal mining commissions only
+
+  rank2:
+    rank: 2
+    display-name: "Worker"
+    cost: 100
+    unlocked-types:
+      - WOODCUTTING   # Woodcutting commissions only
+
+  rank3:
+    rank: 3
+    display-name: "Laborer"
+    cost: 250
+    unlocked-types:
+      - FARMING       # Farming commissions only
+
+  rank4:
+    rank: 4
+    display-name: "Trustee"
+    cost: 500
+    unlocked-types:
+      - MINING_IRON   # Iron mining
+      - MINING_GOLD   # Gold mining
+      - MINING_DIAMOND # Diamond mining
