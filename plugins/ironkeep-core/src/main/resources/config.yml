@@ -41,6 +41,20 @@ new-player-spawn:
   yaw: 0.0
   pitch: 0.0
 
+farming:
+  crop-type: WHEAT
+  max-age: 7
+  region:
+    enabled: false
+    min:
+      x: -100
+      y: 0
+      z: -100
+    max:
+      x: 100
+      y: 256
+      z: 100
+
 commission-board:
   block-type: OAK_WALL_SIGN
   locations:
