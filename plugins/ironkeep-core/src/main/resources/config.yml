@@ -1,4 +1,5 @@
 warden:
+  first-commission: mining_coal  # Commission ID assigned to first-join players after Warden dialogue
   spawn:
     world: world
     x: 0.5

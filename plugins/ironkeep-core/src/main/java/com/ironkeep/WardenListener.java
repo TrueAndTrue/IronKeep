@@ -71,7 +71,7 @@ public class WardenListener implements Listener {
         var scheduler = plugin.getServer().getScheduler();
         for (int i = 0; i < DIALOGUE.size(); i++) {
             String line = DIALOGUE.get(i);
-            long delay = 1 + (long) i * 40; // line 1 at ~0s, line 2 at 2s, line 3 at 4s
+            long delay = 20 + (long) i * 40; // line 1 at 1s, line 2 at 3s, line 3 at 5s
             boolean isLast = (i == DIALOGUE.size() - 1);
             scheduler.runTaskLater(plugin, () -> {
                 if (!player.isOnline()) return;
@@ -83,6 +83,21 @@ public class WardenListener implements Listener {
                 if (isLast) {
                     seen.add(uuid);
                     save();
+                    // Assign first commission after dialogue completes
+                    String commissionId = plugin.getConfig().getString("warden.first-commission", "mining_coal");
+                    CommissionDefinition def = plugin.getCommissionRegistry().getById(commissionId);
+                    if (def == null) {
+                        plugin.getLogger().warning("WardenListener: first-commission id '"
+                                + commissionId + "' not found in commission registry.");
+                        player.sendMessage(Component.text(
+                                "The Warden has something for you, but something went wrong. Please contact an admin.")
+                                .color(NamedTextColor.RED));
+                    } else {
+                        plugin.getCommissionManager().assignCommission(player, commissionId);
+                        player.sendMessage(Component.text(
+                                "Your first task: " + def.getDescription())
+                                .color(NamedTextColor.YELLOW));
+                    }
                 }
             }, delay);
         }
