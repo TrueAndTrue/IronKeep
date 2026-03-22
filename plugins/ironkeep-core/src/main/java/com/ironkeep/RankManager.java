@@ -6,7 +6,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Manages player ranks and rank definitions.
@@ -106,32 +105,20 @@ public class RankManager {
 
     public int getMaxRank() { return maxRank; }
 
-    /**
-     * Returns all commission types unlocked at or below the player's current rank (cumulative).
-     * e.g. Rank 2 unlocks WOODCUTTING but Rank 1 unlocked MINING, so Rank 2 players get both.
-     */
-    public Set<String> getCumulativeUnlockedTypes(UUID uuid) {
-        int playerRank = getPlayerRank(uuid);
-        Set<String> types = new HashSet<>();
-        for (int r = 1; r <= playerRank; r++) {
-            RankDefinition def = getDefinition(r);
-            if (def != null) types.addAll(def.getUnlockedTypes());
-        }
-        return types;
-    }
-
-    /** Returns true if the player's rank (cumulatively) allows them to take a commission of this type. */
+    /** Returns true if the player's rank allows them to take a commission of this type. */
     public boolean canAccept(UUID uuid, String commissionType) {
-        return getCumulativeUnlockedTypes(uuid).stream()
-                .anyMatch(t -> t.equalsIgnoreCase(commissionType));
+        RankDefinition def = getPlayerRankDefinition(uuid);
+        if (def == null) return false;
+        return def.allowsType(commissionType);
     }
 
-    /** Returns a list of commissions the player can see based on their cumulative rank unlocks. */
+    /** Returns a list of commissions the player can see based on their rank. */
     public List<CommissionDefinition> getAccessibleCommissions(UUID uuid) {
-        Set<String> unlocked = getCumulativeUnlockedTypes(uuid);
+        RankDefinition rankDef = getPlayerRankDefinition(uuid);
+        if (rankDef == null) return Collections.emptyList();
         List<CommissionDefinition> accessible = new ArrayList<>();
         for (CommissionDefinition comm : plugin.getCommissionRegistry().getAll().values()) {
-            if (unlocked.stream().anyMatch(t -> t.equalsIgnoreCase(comm.getType()))) {
+            if (rankDef.allowsType(comm.getType())) {
                 accessible.add(comm);
             }
         }

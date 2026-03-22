@@ -64,13 +64,14 @@ public class RankUpCommand implements BasicCommand {
         currency.addBalance(uuid, -cost);
         rankManager.setPlayerRank(uuid, nextRank);
 
-        // Cancel active commission only if the new rank (cumulatively) no longer allows it
+        // Cancel active commission if it's from the old rank
         CommissionManager commManager = plugin.getCommissionManager();
         if (commManager.hasActiveCommission(player)) {
             CommissionDefinition active = commManager.getActiveCommission(player);
-            if (active != null && !rankManager.canAccept(uuid, active.getType())) {
+            RankDefinition oldDef = rankManager.getDefinition(currentRank);
+            if (active != null && oldDef != null && !nextDef.allowsType(active.getType())) {
                 commManager.cancelCommission(uuid);
-                player.sendMessage(PREFIX + ChatColor.YELLOW
+                player.sendMessage(PREFIX + ChatColor.YELLOW 
                         + "Your previous commission has been cancelled due to ranking up.");
             }
         }
