@@ -111,6 +111,37 @@ public class ZoneManager {
         }
     }
 
+    /**
+     * Fixes world blocks after zone border placement:
+     * - Replaces the incorrect X:-9 Obsidian strip with Grass Block (the border should be at X:-10)
+     * - Places Coal Ore from X:-8,Z:12,Y:71 to X:-1,Z:21,Y:72
+     * Called one tick after world load, same time as placeBorders().
+     */
+    public void placeWorldBlocks() {
+        World world = Bukkit.getWorld("world");
+        if (world == null) {
+            plugin.getLogger().warning("ZoneManager.placeWorldBlocks: world 'world' not found.");
+            return;
+        }
+
+        // Fix: replace X:-9 obsidian strip (Z:10 to Z:23, Y:70) with grass
+        for (int z = 10; z <= 23; z++) {
+            world.getBlockAt(-9, 70, z).setType(Material.GRASS_BLOCK);
+        }
+
+        // Place coal ore strip: X:-8 to X:-1, Z:12 to Z:21, Y:71 to Y:72
+        int count = 0;
+        for (int x = -8; x <= -1; x++) {
+            for (int z = 12; z <= 21; z++) {
+                for (int y = 71; y <= 72; y++) {
+                    world.getBlockAt(x, y, z).setType(Material.COAL_ORE);
+                    count++;
+                }
+            }
+        }
+        plugin.getLogger().info("ZoneManager: placed " + count + " Coal Ore blocks in mining zone.");
+    }
+
     /** Returns all zones that apply to a given commission type. */
     public List<Zone> getZonesForType(String commissionType) {
         List<Zone> result = new ArrayList<>();
