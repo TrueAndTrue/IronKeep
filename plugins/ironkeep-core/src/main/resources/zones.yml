@@ -1,0 +1,52 @@
+# IronKeep Zone Definitions
+# Zones restrict where commission progress is tracked.
+# Multiple zones per commission type are supported.
+# Changes take effect on server restart.
+#
+# Fields:
+#   world            - World name
+#   x1, z1, x2, z2  - Corner coordinates (order doesn't matter)
+#   y-min, y-max     - Y bounds (currently covers full height by default)
+#   commission-types - List of commission type keys valid in this zone
+
+# If block-without-zone is true (default), breaking blocks outside ANY zone does not count.
+# Set to false to allow progress anywhere if no zone is configured for that type.
+block-without-zone: true
+
+zones:
+
+  mining_zone:
+    world: world
+    x1: 10
+    z1: 10
+    x2: 100
+    z2: 100
+    y-min: -64
+    y-max: 320
+    commission-types:
+      - MINING_COAL
+      - MINING_IRON
+      - MINING_GOLD
+      - MINING_DIAMOND
+
+  woodcutting_zone:
+    world: world
+    x1: -100
+    z1: -100
+    x2: -10
+    z2: -10
+    y-min: -64
+    y-max: 320
+    commission-types:
+      - WOODCUTTING
+
+  farming_zone:
+    world: world
+    x1: 10
+    z1: -100
+    x2: 100
+    z2: -10
+    y-min: -64
+    y-max: 320
+    commission-types:
+      - FARMING

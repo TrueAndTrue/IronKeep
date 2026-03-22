@@ -16,6 +16,7 @@ copy /Y "%~dp0plugins\ironkeep-core\src\main\resources\starter-kit.yml"  "%~dp0s
 copy /Y "%~dp0plugins\ironkeep-core\src\main\resources\ranks.yml"         "%~dp0server\plugins\IronKeep\ranks.yml"
 copy /Y "%~dp0plugins\ironkeep-core\src\main\resources\escapes.yml"       "%~dp0server\plugins\IronKeep\escapes.yml"
 copy /Y "%~dp0plugins\ironkeep-core\src\main\resources\daily-quests.yml"  "%~dp0server\plugins\IronKeep\daily-quests.yml"
+copy /Y "%~dp0plugins\ironkeep-core\src\main\resources\zones.yml"         "%~dp0server\plugins\IronKeep\zones.yml"
 
 echo Starting server...
 cd /d "%~dp0server"

@@ -43,8 +43,10 @@ public class FarmingListener implements Listener {
         int maxAge = plugin.getConfig().getInt("farming.max-age", 7);
         if (ageable.getAge() != maxAge) return;
 
-        // Check optional region restriction
-        if (plugin.getConfig().getBoolean("farming.region.enabled", false)) {
+        // Zone check — use ZoneManager if available, fall back to legacy region config
+        if (plugin.getZoneManager() != null) {
+            if (!plugin.getZoneManager().isInValidZone(event.getBlock().getLocation(), def.getType())) return;
+        } else if (plugin.getConfig().getBoolean("farming.region.enabled", false)) {
             Location loc = event.getBlock().getLocation();
             double minX = plugin.getConfig().getDouble("farming.region.min.x");
             double minY = plugin.getConfig().getDouble("farming.region.min.y");

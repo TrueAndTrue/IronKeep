@@ -43,8 +43,10 @@ public class MiningListener implements Listener {
         // Accept both normal and deepslate variants of the same ore
         if (!matches(brokenBlock, requiredMaterial)) return;
 
-        // Check optional region restriction
-        if (plugin.getConfig().getBoolean("mining.region.enabled", false)) {
+        // Zone check — use ZoneManager if available, fall back to legacy region config
+        if (plugin.getZoneManager() != null) {
+            if (!plugin.getZoneManager().isInValidZone(event.getBlock().getLocation(), def.getType())) return;
+        } else if (plugin.getConfig().getBoolean("mining.region.enabled", false)) {
             Location loc = event.getBlock().getLocation();
             double minX = plugin.getConfig().getDouble("mining.region.min.x");
             double minY = plugin.getConfig().getDouble("mining.region.min.y");

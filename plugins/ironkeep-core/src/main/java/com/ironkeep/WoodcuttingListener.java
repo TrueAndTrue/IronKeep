@@ -55,8 +55,10 @@ public class WoodcuttingListener implements Listener {
             if (!AXES.contains(mainHand.getType())) return;
         }
 
-        // Check optional region restriction
-        if (plugin.getConfig().getBoolean("woodcutting.region-enabled", false)) {
+        // Zone check — use ZoneManager if available, fall back to legacy region config
+        if (plugin.getZoneManager() != null) {
+            if (!plugin.getZoneManager().isInValidZone(event.getBlock().getLocation(), def.getType())) return;
+        } else if (plugin.getConfig().getBoolean("woodcutting.region-enabled", false)) {
             Location loc = event.getBlock().getLocation();
             double minX = plugin.getConfig().getDouble("woodcutting.region.min.x");
             double minY = plugin.getConfig().getDouble("woodcutting.region.min.y");
