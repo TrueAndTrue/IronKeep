@@ -1,0 +1,14 @@
+# IronKeep Daily Quest Configuration
+# The daily quest resets at midnight UTC by default.
+# Players complete it once per day for bonus Gold Coins and Shards.
+#
+# Gold Coin reward is subject to the player's escape bonus multiplier.
+# Shards reward is always at base value (unaffected by escape bonus).
+
+quest:
+  objective: "Say \"Hi\" in chat"
+  gold-reward: 50.0
+  shards-reward: 50.0
+
+# Reset schedule. Currently only MIDNIGHT_UTC is supported.
+reset-schedule: MIDNIGHT_UTC
