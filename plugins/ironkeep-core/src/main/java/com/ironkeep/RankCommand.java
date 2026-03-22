@@ -18,7 +18,7 @@ public class RankCommand implements BasicCommand {
     }
 
     public void register(Commands commands) {
-        commands.register("rank", "View your current rank and available commission types.", this);
+        commands.register("rank", "View your current rank and rankup cost.", this);
     }
 
     @Override
@@ -32,22 +32,16 @@ public class RankCommand implements BasicCommand {
         RankManager rankManager = plugin.getRankManager();
 
         int currentRank = rankManager.getPlayerRank(uuid);
-        RankDefinition def = rankManager.getDefinition(currentRank);
+        int maxRank = rankManager.getMaxRank();
 
         player.sendMessage(ChatColor.GOLD + "--- " + ChatColor.YELLOW + "Your Rank" + ChatColor.GOLD + " ---");
-        if (def != null) {
-            player.sendMessage(ChatColor.GOLD + "  Rank:      " + ChatColor.YELLOW + def.getDisplayName());
-            player.sendMessage(ChatColor.GOLD + "  Unlocked:  " + ChatColor.YELLOW + String.join(", ", def.getUnlockedTypes()));
-        } else {
-            player.sendMessage(ChatColor.GOLD + "  Rank:      " + ChatColor.YELLOW + "Rank " + currentRank);
-        }
+        player.sendMessage(ChatColor.GOLD + "  Rank:      " + ChatColor.YELLOW + currentRank);
 
-        // Next rank info
         int nextRank = currentRank + 1;
         RankDefinition nextDef = rankManager.getDefinition(nextRank);
         if (nextDef != null) {
-            player.sendMessage(ChatColor.GOLD + "  Next Rank: " + ChatColor.YELLOW + nextDef.getDisplayName()
-                    + ChatColor.GRAY + " (costs " + format(nextDef.getCost()) + " Gold Coins)");
+            player.sendMessage(ChatColor.GOLD + "  Next Rank: " + ChatColor.YELLOW + nextRank);
+            player.sendMessage(ChatColor.GOLD + "  Cost:      " + ChatColor.YELLOW + format(nextDef.getCost()) + " Gold Coins");
         } else {
             player.sendMessage(ChatColor.GOLD + "  Next Rank: " + ChatColor.GRAY + "Max rank reached");
         }
