@@ -132,9 +132,11 @@ public class CommissionBoardListener implements Listener {
                 ItemStack item = new ItemStack(mat);
                 ItemMeta meta = item.getItemMeta();
                 meta.setDisplayName(ChatColor.GOLD + def.getDisplayName());
+                String rewardLine = ChatColor.YELLOW + "Reward: " + formatCoins(def.getRewardAmount()) + " Gold Coins"
+                        + (def.getShardsReward() > 0 ? ChatColor.YELLOW + " + " + ChatColor.AQUA + formatCoins(def.getShardsReward()) + " Shards" : "");
                 meta.setLore(Arrays.asList(
                         ChatColor.GRAY + def.getDescription(),
-                        ChatColor.YELLOW + "Reward: " + formatCoins(def.getRewardAmount()),
+                        rewardLine,
                         ChatColor.GREEN + "Click to accept"
                 ));
                 meta.getPersistentDataContainer().set(commissionIdKey, PersistentDataType.STRING, def.getId());

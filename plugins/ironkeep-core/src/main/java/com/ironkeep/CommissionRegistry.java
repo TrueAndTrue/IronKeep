@@ -51,13 +51,14 @@ public class CommissionRegistry {
             String turnInItem = entry.getString("turn-in-item", null); // optional, falls back to objective-item
             int objectiveQuantity = entry.getInt("objective-quantity", -1);
             double rewardAmount = entry.getDouble("reward-amount", -1);
+            double shardsReward = entry.getDouble("shards-reward", 0.0); // optional, defaults to 0
             if (type == null || displayName == null || description == null || objectiveItem == null
                     || objectiveQuantity < 1 || rewardAmount < 0) {
                 plugin.getLogger().warning("Skipping commission '" + id + "': missing or invalid fields.");
                 continue;
             }
             definitions.put(id, new CommissionDefinition(id, type, displayName, description,
-                    objectiveItem, turnInItem, objectiveQuantity, rewardAmount));
+                    objectiveItem, turnInItem, objectiveQuantity, rewardAmount, shardsReward));
         }
         plugin.getLogger().info("Loaded " + definitions.size() + " commission definitions.");
     }
