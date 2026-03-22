@@ -6,6 +6,8 @@ import io.papermc.paper.command.brigadier.Commands;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
+import java.util.UUID;
+
 @SuppressWarnings("UnstableApiUsage")
 public class BalanceCommand implements BasicCommand {
 
@@ -16,7 +18,7 @@ public class BalanceCommand implements BasicCommand {
     }
 
     public void register(Commands commands) {
-        commands.register("balance", "Check your Gold Coin balance", this);
+        commands.register("balance", "Check your currency balances", this);
     }
 
     @Override
@@ -26,14 +28,21 @@ public class BalanceCommand implements BasicCommand {
             return;
         }
 
-        double balance = plugin.getCurrencyManager().getBalance(player.getUniqueId());
-        player.sendMessage(ChatColor.GOLD + "Your balance: " + ChatColor.YELLOW + formatCoins(balance));
+        UUID uuid = player.getUniqueId();
+        CurrencyManager currency = plugin.getCurrencyManager();
+
+        double goldCoins = currency.getBalance(uuid);
+        double shards = currency.getShards(uuid);
+
+        player.sendMessage(ChatColor.GOLD + "--- " + ChatColor.YELLOW + "Your Balance" + ChatColor.GOLD + " ---");
+        player.sendMessage(ChatColor.GOLD + "  Gold Coins: " + ChatColor.YELLOW + format(goldCoins));
+        player.sendMessage(ChatColor.AQUA + "  Shards:     " + ChatColor.WHITE + format(shards));
     }
 
-    private String formatCoins(double amount) {
+    private String format(double amount) {
         if (amount == Math.floor(amount)) {
-            return (long) amount + " Gold Coins";
+            return String.format("%,d", (long) amount);
         }
-        return String.format("%.2f Gold Coins", amount);
+        return String.format("%,.2f", amount);
     }
 }
