@@ -48,6 +48,7 @@ public class CommissionRegistry {
             String displayName = entry.getString("display-name");
             String description = entry.getString("description");
             String objectiveItem = entry.getString("objective-item");
+            String turnInItem = entry.getString("turn-in-item", null); // optional, falls back to objective-item
             int objectiveQuantity = entry.getInt("objective-quantity", -1);
             double rewardAmount = entry.getDouble("reward-amount", -1);
             if (type == null || displayName == null || description == null || objectiveItem == null
@@ -56,7 +57,7 @@ public class CommissionRegistry {
                 continue;
             }
             definitions.put(id, new CommissionDefinition(id, type, displayName, description,
-                    objectiveItem, objectiveQuantity, rewardAmount));
+                    objectiveItem, turnInItem, objectiveQuantity, rewardAmount));
         }
         plugin.getLogger().info("Loaded " + definitions.size() + " commission definitions.");
     }

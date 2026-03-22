@@ -139,7 +139,8 @@ public class CommissionManager {
                     + ChatColor.RED + " (" + remaining + " remaining).");
             return;
         }
-        Material material = Material.matchMaterial(def.getObjectiveItem());
+        // Use turn-in item for inventory check (may differ from objective block, e.g. COAL_ORE -> COAL)
+        Material material = Material.matchMaterial(def.getTurnInItem());
         if (material == null) {
             player.sendMessage(PREFIX + ChatColor.RED + "Commission item is misconfigured. Contact an admin.");
             return;
@@ -148,7 +149,7 @@ public class CommissionManager {
         int inInventory = countItem(player, material);
         if (inInventory < needed) {
             player.sendMessage(PREFIX + ChatColor.RED + "You don't have the required items. Need "
-                    + ChatColor.YELLOW + needed + "x " + formatItem(def.getObjectiveItem())
+                    + ChatColor.YELLOW + needed + "x " + formatItem(def.getTurnInItem())
                     + ChatColor.RED + " but only have " + inInventory + ".");
             return;
         }

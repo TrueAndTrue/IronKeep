@@ -8,9 +8,11 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo Copying config...
-copy /Y "%~dp0plugins\ironkeep-core\src\main\resources\config.yml" "%~dp0server\plugins\IronKeep\config.yml"
-copy /Y "%~dp0plugins\ironkeep-core\src\main\resources\commissions.yml" "%~dp0server\plugins\IronKeep\commissions.yml"
+echo Syncing config files...
+if not exist "%~dp0server\plugins\IronKeep" mkdir "%~dp0server\plugins\IronKeep"
+copy /Y "%~dp0plugins\ironkeep-core\src\main\resources\config.yml"       "%~dp0server\plugins\IronKeep\config.yml"
+copy /Y "%~dp0plugins\ironkeep-core\src\main\resources\commissions.yml"  "%~dp0server\plugins\IronKeep\commissions.yml"
+copy /Y "%~dp0plugins\ironkeep-core\src\main\resources\starter-kit.yml"  "%~dp0server\plugins\IronKeep\starter-kit.yml"
 
 echo Starting server...
 cd /d "%~dp0server"

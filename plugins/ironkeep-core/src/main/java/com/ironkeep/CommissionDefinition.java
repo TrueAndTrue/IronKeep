@@ -6,17 +6,19 @@ public class CommissionDefinition {
     private final String type;
     private final String displayName;
     private final String description;
-    private final String objectiveItem;
+    private final String objectiveItem;   // Block/action to track progress (e.g. COAL_ORE)
+    private final String turnInItem;      // Item to hand in for completion (e.g. COAL). Falls back to objectiveItem if null.
     private final int objectiveQuantity;
     private final double rewardAmount;
 
     public CommissionDefinition(String id, String type, String displayName, String description,
-                                String objectiveItem, int objectiveQuantity, double rewardAmount) {
+                                String objectiveItem, String turnInItem, int objectiveQuantity, double rewardAmount) {
         this.id = id;
         this.type = type;
         this.displayName = displayName;
         this.description = description;
         this.objectiveItem = objectiveItem;
+        this.turnInItem = (turnInItem != null && !turnInItem.isEmpty()) ? turnInItem : objectiveItem;
         this.objectiveQuantity = objectiveQuantity;
         this.rewardAmount = rewardAmount;
     }
@@ -26,6 +28,7 @@ public class CommissionDefinition {
     public String getDisplayName() { return displayName; }
     public String getDescription() { return description; }
     public String getObjectiveItem() { return objectiveItem; }
+    public String getTurnInItem() { return turnInItem; }
     public int getObjectiveQuantity() { return objectiveQuantity; }
     public double getRewardAmount() { return rewardAmount; }
 }

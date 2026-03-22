@@ -2,12 +2,14 @@
 # Add or modify commissions here. Changes take effect on server restart.
 #
 # Fields:
-#   type               - Category for display (MINING, WOODCUTTING, FARMING, etc.)
-#   display-name       - Human-readable name shown in-game
-#   description        - Short flavour text describing the commission
-#   objective-item     - Bukkit Material name (e.g. IRON_ORE) or action key
-#   objective-quantity - Number of items/actions required to complete
-#   reward-amount      - Gold Coins awarded on completion
+#   type               - Category (MINING, WOODCUTTING, FARMING)
+#   display-name       - Name shown to player
+#   description        - Short objective description
+#   objective-item     - Block to BREAK for progress tracking (e.g. COAL_ORE)
+#   turn-in-item       - Item to have in INVENTORY when completing (e.g. COAL)
+#                        If omitted, falls back to objective-item
+#   objective-quantity - Number required
+#   reward-amount      - Gold Coins on completion
 
 commissions:
 
@@ -16,32 +18,36 @@ commissions:
   mining_coal:
     type: MINING
     display-name: "Coal Haul"
-    description: "Mine coal ore for the smelters."
-    objective-item: COAL
+    description: "Mine 2 coal ore for the smelters."
+    objective-item: COAL_ORE
+    turn-in-item: COAL
     objective-quantity: 2
     reward-amount: 40.0
 
   mining_iron:
     type: MINING
     display-name: "Iron Rush"
-    description: "Mine iron ore for the blacksmith."
+    description: "Mine 2 iron ore for the blacksmith."
     objective-item: IRON_ORE
+    turn-in-item: RAW_IRON
     objective-quantity: 2
     reward-amount: 100.0
 
   mining_gold:
     type: MINING
     display-name: "Gold Fever"
-    description: "Mine gold ore for the treasury."
+    description: "Mine 2 gold ore for the treasury."
     objective-item: GOLD_ORE
+    turn-in-item: RAW_GOLD
     objective-quantity: 2
     reward-amount: 150.0
 
   mining_diamond:
     type: MINING
     display-name: "Diamond Expedition"
-    description: "Retrieve diamonds for the guild vault."
-    objective-item: DIAMOND
+    description: "Retrieve 2 diamonds for the guild vault."
+    objective-item: DIAMOND_ORE
+    turn-in-item: DIAMOND
     objective-quantity: 2
     reward-amount: 500.0
 
@@ -50,7 +56,7 @@ commissions:
   woodcutting_oak:
     type: WOODCUTTING
     display-name: "Lumber Run"
-    description: "Chop oak logs for the carpenter."
+    description: "Chop 2 oak logs for the carpenter."
     objective-item: OAK_LOG
     objective-quantity: 2
     reward-amount: 75.0
@@ -58,7 +64,7 @@ commissions:
   woodcutting_birch:
     type: WOODCUTTING
     display-name: "Birch Bundle"
-    description: "Gather birch logs for the fletcher."
+    description: "Gather 2 birch logs for the fletcher."
     objective-item: BIRCH_LOG
     objective-quantity: 2
     reward-amount: 55.0
@@ -68,8 +74,7 @@ commissions:
   farming_wheat:
     type: FARMING
     display-name: "Wheat Harvest"
-    description: "Harvest wheat for the baker."
+    description: "Harvest 2 wheat for the baker."
     objective-item: WHEAT
     objective-quantity: 2
     reward-amount: 50.0
-
