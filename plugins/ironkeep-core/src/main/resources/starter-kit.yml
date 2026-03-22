@@ -20,9 +20,15 @@ kit:
     quantity: 1
   - item: WOODEN_SWORD
     quantity: 1
-  - item: WOODEN_PICKAXE
+  - item: DIAMOND_PICKAXE
     quantity: 1
-  - item: WOODEN_AXE
+    enchantments:
+      - enchantment: efficiency
+        level: 5
+  - item: DIAMOND_AXE
     quantity: 1
-  - item: WOODEN_HOE
+    enchantments:
+      - enchantment: efficiency
+        level: 5
+  - item: DIAMOND_HOE
     quantity: 1

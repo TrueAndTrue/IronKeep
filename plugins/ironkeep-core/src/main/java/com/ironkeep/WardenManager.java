@@ -4,12 +4,9 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Zombie;
-import org.bukkit.inventory.EntityEquipment;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.entity.Villager;
 
 public class WardenManager {
 
@@ -70,30 +67,15 @@ public class WardenManager {
     }
 
     private void spawnNpc(Location location) {
-        location.getWorld().spawn(location, Zombie.class, z -> {
-            z.setInvulnerable(true);
-            z.setSilent(true);
-            z.setAI(false);
-            z.setGravity(false);
-            z.setPersistent(true);
-            z.setBaby(false);
-            z.customName(Component.text("Warden").color(NamedTextColor.GRAY));
-            z.setCustomNameVisible(true);
-            z.getScoreboardTags().add(WARDEN_TAG);
-
-            EntityEquipment eq = z.getEquipment();
-            if (eq != null) {
-                eq.setHelmet(new ItemStack(Material.IRON_HELMET));
-                eq.setChestplate(new ItemStack(Material.IRON_CHESTPLATE));
-                eq.setLeggings(new ItemStack(Material.IRON_LEGGINGS));
-                eq.setBoots(new ItemStack(Material.IRON_BOOTS));
-                eq.setItemInMainHand(new ItemStack(Material.IRON_SWORD));
-                eq.setHelmetDropChance(0f);
-                eq.setChestplateDropChance(0f);
-                eq.setLeggingsDropChance(0f);
-                eq.setBootsDropChance(0f);
-                eq.setItemInMainHandDropChance(0f);
-            }
+        location.getWorld().spawn(location, Villager.class, v -> {
+            v.setInvulnerable(true);
+            v.setSilent(true);
+            v.setAI(false);
+            v.setGravity(false);
+            v.setPersistent(true);
+            v.customName(Component.text("Warden").color(NamedTextColor.GRAY));
+            v.setCustomNameVisible(true);
+            v.getScoreboardTags().add(WARDEN_TAG);
         });
     }
 

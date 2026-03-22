@@ -6,6 +6,8 @@ import io.papermc.paper.command.brigadier.Commands;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -21,6 +23,17 @@ public class CommissionCommand implements BasicCommand {
 
     public void register(Commands commands) {
         commands.register("commission", "Manage your commissions", this);
+    }
+
+    @Override
+    public Collection<String> suggest(CommandSourceStack stack, String[] args) {
+        if (args.length <= 1) {
+            String partial = args.length == 1 ? args[0].toLowerCase() : "";
+            return List.of("new", "status", "complete", "list", "skip").stream()
+                    .filter(s -> s.startsWith(partial))
+                    .toList();
+        }
+        return List.of();
     }
 
     @Override
@@ -40,6 +53,7 @@ public class CommissionCommand implements BasicCommand {
             case "status" -> handleStatus(player);
             case "complete" -> plugin.getCommissionManager().completeCommission(player);
             case "list" -> handleList(player);
+            case "skip" -> handleSkip(player);
             default -> sendUsage(player);
         }
     }
@@ -73,6 +87,20 @@ public class CommissionCommand implements BasicCommand {
                     + ChatColor.GRAY + " — " + def.getDisplayName()
                     + ChatColor.GRAY + " (" + def.getDescription() + ")");
         }
+    }
+
+    private void handleSkip(Player player) {
+        if (!player.isOp()) {
+            player.sendMessage(PREFIX + ChatColor.RED + "You don't have permission to skip commissions.");
+            return;
+        }
+        CommissionManager manager = plugin.getCommissionManager();
+        if (!manager.hasActiveCommission(player)) {
+            player.sendMessage(PREFIX + ChatColor.YELLOW + "You have no active commission to skip.");
+            return;
+        }
+        manager.skipCommission(player);
+        player.sendMessage(PREFIX + ChatColor.YELLOW + "Commission skipped.");
     }
 
     private void sendUsage(Player player) {

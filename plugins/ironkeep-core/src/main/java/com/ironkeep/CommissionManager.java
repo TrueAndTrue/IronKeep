@@ -118,6 +118,10 @@ public class CommissionManager {
         return state != null && state.getActiveCommissionId() != null;
     }
 
+    public void skipCommission(Player player) {
+        stateStore.clearState(player.getUniqueId());
+    }
+
     public void completeCommission(Player player) {
         UUID uuid = player.getUniqueId();
         PlayerCommissionState state = stateStore.getState(uuid);
