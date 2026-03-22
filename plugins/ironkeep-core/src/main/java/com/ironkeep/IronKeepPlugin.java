@@ -16,6 +16,7 @@ public class IronKeepPlugin extends JavaPlugin {
     private WardenManager wardenManager;
     private RankManager rankManager;
     private EscapeManager escapeManager;
+    private DailyQuestManager dailyQuestManager;
 
     @SuppressWarnings("UnstableApiUsage")
     @Override
@@ -30,6 +31,9 @@ public class IronKeepPlugin extends JavaPlugin {
 
         escapeManager = new EscapeManager(this);
         escapeManager.load();
+
+        dailyQuestManager = new DailyQuestManager(this);
+        dailyQuestManager.load();
 
         currencyManager = new CurrencyManager(this);
         currencyManager.load();
@@ -69,6 +73,9 @@ public class IronKeepPlugin extends JavaPlugin {
             new RankUpCommand(this).register(commands);
             new RankCommand(this).register(commands);
             new EscapeCommand(this).register(commands);
+            DailyQuestListener dql = new DailyQuestListener(this);
+            getServer().getPluginManager().registerEvents(dql, this);
+            dql.register(commands);
             new RemoveTargetCommand().register(commands);
         });
 
@@ -102,5 +109,9 @@ public class IronKeepPlugin extends JavaPlugin {
 
     public EscapeManager getEscapeManager() {
         return escapeManager;
+    }
+
+    public DailyQuestManager getDailyQuestManager() {
+        return dailyQuestManager;
     }
 }
