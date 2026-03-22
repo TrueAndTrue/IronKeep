@@ -20,6 +20,26 @@ public class CommissionManager {
         this.currencyManager = currencyManager;
     }
 
+    public void assignCommission(Player player, String commissionId) {
+        if (hasActiveCommission(player)) {
+            player.sendMessage(PREFIX + ChatColor.RED
+                    + "You already have an active commission. Complete it first.");
+            return;
+        }
+        CommissionDefinition def = registry.getById(commissionId);
+        if (def == null) {
+            player.sendMessage(PREFIX + ChatColor.RED + "Unknown commission: " + commissionId);
+            return;
+        }
+        UUID uuid = player.getUniqueId();
+        PlayerCommissionState state = new PlayerCommissionState(uuid);
+        state.setActiveCommissionId(def.getId());
+        state.setProgress(0);
+        stateStore.setState(uuid, state);
+        player.sendMessage(PREFIX + ChatColor.GREEN + "Commission accepted: "
+                + def.getDisplayName() + " — " + def.getDescription());
+    }
+
     public void assignCommission(Player player) {
         if (hasActiveCommission(player)) {
             player.sendMessage(PREFIX + ChatColor.RED + "You already have an active commission. "
