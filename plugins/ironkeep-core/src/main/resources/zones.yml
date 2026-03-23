@@ -32,22 +32,22 @@ zones:
 
   woodcutting_zone:
     world: world
-    x1: -100
-    z1: -100
-    x2: -10
-    z2: -10
-    y-min: -64
-    y-max: 320
+    x1: -10
+    z1: -16
+    x2: 2
+    z2: -3
+    y-min: 70
+    y-max: 72
     commission-types:
       - WOODCUTTING
 
   farming_zone:
     world: world
-    x1: 10
-    z1: -100
-    x2: 100
-    z2: -10
-    y-min: -64
-    y-max: 320
+    x1: -22
+    z1: -1
+    x2: -12
+    z2: 8
+    y-min: 70
+    y-max: 72
     commission-types:
       - FARMING
