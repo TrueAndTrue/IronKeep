@@ -39,6 +39,10 @@ public class IronKeepPlugin extends JavaPlugin {
         zoneManager = new ZoneManager(this);
         zoneManager.load();
 
+        BlockRegenManager blockRegenManager = new BlockRegenManager(this);
+        blockRegenManager.load();
+        getServer().getPluginManager().registerEvents(blockRegenManager, this);
+
         currencyManager = new CurrencyManager(this);
         currencyManager.load();
 

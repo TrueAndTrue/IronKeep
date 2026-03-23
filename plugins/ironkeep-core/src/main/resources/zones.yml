@@ -13,6 +13,15 @@
 # Set to false to allow progress anywhere if no zone is configured for that type.
 block-without-zone: true
 
+# Block regeneration settings
+# regen-delay-ticks: how many server ticks before a block regenerates (20 ticks = 1 second)
+regen-delay-ticks: 60  # 3 seconds
+
+# Placeholder blocks used while regeneration is pending
+placeholders:
+  mining: BEDROCK
+  woodcutting: BEDROCK
+
 zones:
 
   mining_zone:
