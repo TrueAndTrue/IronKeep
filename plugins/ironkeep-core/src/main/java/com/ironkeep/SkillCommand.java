@@ -193,9 +193,16 @@ public class SkillCommand implements BasicCommand, Listener {
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
         String title = event.getView().getTitle();
+
+        // Only handle clicks in Skills GUIs — do NOT cancel other inventories
+        boolean isL1 = title.equals(GUI_TITLE_L1);
+        boolean isL2 = title.startsWith(ChatColor.DARK_GRAY + "[ " + ChatColor.GOLD)
+                && title.endsWith(GUI_TITLE_L2_SUFFIX);
+        if (!isL1 && !isL2) return;
+
         event.setCancelled(true);
 
-        if (title.equals(GUI_TITLE_L1)) {
+        if (isL1) {
             // Level 1 GUI: check for skill item click
             ItemStack clicked = event.getCurrentItem();
             if (clicked == null || !clicked.hasItemMeta()) return;
@@ -204,7 +211,7 @@ public class SkillCommand implements BasicCommand, Listener {
             if (skillType != null) {
                 openLevel2(player, skillType);
             }
-        } else if (title.startsWith(ChatColor.DARK_GRAY + "[ " + ChatColor.GOLD) && title.endsWith(GUI_TITLE_L2_SUFFIX)) {
+        } else if (isL2) {
             // Level 2 GUI: check for back button
             if (event.getSlot() == 49) {
                 openLevel1(player);
