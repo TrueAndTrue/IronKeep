@@ -10,13 +10,16 @@ if %errorlevel% neq 0 (
 
 echo Syncing config files...
 if not exist "%~dp0server\plugins\IronKeep" mkdir "%~dp0server\plugins\IronKeep"
-copy /Y "%~dp0plugins\ironkeep-core\src\main\resources\config.yml"       "%~dp0server\plugins\IronKeep\config.yml"
-copy /Y "%~dp0plugins\ironkeep-core\src\main\resources\commissions.yml"  "%~dp0server\plugins\IronKeep\commissions.yml"
-copy /Y "%~dp0plugins\ironkeep-core\src\main\resources\starter-kit.yml"  "%~dp0server\plugins\IronKeep\starter-kit.yml"
-copy /Y "%~dp0plugins\ironkeep-core\src\main\resources\ranks.yml"         "%~dp0server\plugins\IronKeep\ranks.yml"
-copy /Y "%~dp0plugins\ironkeep-core\src\main\resources\escapes.yml"       "%~dp0server\plugins\IronKeep\escapes.yml"
-copy /Y "%~dp0plugins\ironkeep-core\src\main\resources\daily-quests.yml"  "%~dp0server\plugins\IronKeep\daily-quests.yml"
-copy /Y "%~dp0plugins\ironkeep-core\src\main\resources\zones.yml"         "%~dp0server\plugins\IronKeep\zones.yml"
+
+REM Copy all .yml files from resources to the plugin data folder automatically.
+REM This picks up any new config files added in future without needing to update this script.
+REM Excludes paper-plugin.yml which is plugin metadata, not a runtime config.
+for %%f in ("%~dp0plugins\ironkeep-core\src\main\resources\*.yml") do (
+    if /I not "%%~nxf"=="paper-plugin.yml" (
+        copy /Y "%%f" "%~dp0server\plugins\IronKeep\%%~nxf" >nul
+        echo   Synced: %%~nxf
+    )
+)
 
 echo Starting server...
 cd /d "%~dp0server"
