@@ -108,7 +108,7 @@ public class CommissionBoardListener implements Listener {
             commMeta.setLore(Arrays.asList(
                     ChatColor.GRAY + def.getDescription(),
                     ChatColor.YELLOW + "Progress: " + progress + "/" + def.getObjectiveQuantity(),
-                    ChatColor.YELLOW + "Reward: " + formatCoins(def.getRewardAmount()),
+                    ChatColor.YELLOW + "Reward: " + Math.round(def.getRewardAmount()) + " Gold Coins",
                     ChatColor.DARK_GRAY + "Use /commission complete to turn in"
             ));
             commItem.setItemMeta(commMeta);
@@ -136,8 +136,8 @@ public class CommissionBoardListener implements Listener {
                 ItemStack item = new ItemStack(mat);
                 ItemMeta meta = item.getItemMeta();
                 meta.setDisplayName(ChatColor.GOLD + def.getDisplayName());
-                String rewardLine = ChatColor.YELLOW + "Reward: " + formatCoins(def.getRewardAmount()) + " Gold Coins"
-                        + (def.getShardsReward() > 0 ? ChatColor.YELLOW + " + " + ChatColor.AQUA + formatCoins(def.getShardsReward()) + " Shards" : "");
+                String rewardLine = ChatColor.YELLOW + "Reward: " + Math.round(def.getRewardAmount()) + " Gold Coins"
+                        + (def.getShardsReward() > 0 ? ChatColor.YELLOW + " + " + ChatColor.AQUA + Math.round(def.getShardsReward()) + " Shards" : "");
                 meta.setLore(Arrays.asList(
                         ChatColor.GRAY + def.getDescription(),
                         rewardLine,
@@ -156,7 +156,7 @@ public class CommissionBoardListener implements Listener {
         ItemStack balItem = new ItemStack(Material.GOLD_INGOT);
         ItemMeta balMeta = balItem.getItemMeta();
         balMeta.setDisplayName(ChatColor.GOLD + "Your Balance");
-        balMeta.setLore(List.of(ChatColor.YELLOW + formatCoins(balance)));
+        balMeta.setLore(List.of(ChatColor.YELLOW + "" + Math.round(balance) + " Gold Coins"));
         balItem.setItemMeta(balMeta);
         gui.setItem(22, balItem);
 
@@ -181,8 +181,4 @@ public class CommissionBoardListener implements Listener {
         return pane;
     }
 
-    private String formatCoins(double amount) {
-        if (amount == Math.floor(amount)) return (long) amount + " Gold Coins";
-        return String.format("%.2f Gold Coins", amount);
-    }
 }

@@ -17,6 +17,11 @@ import java.util.UUID;
  *  - Shards: TRADEABLE. Can flow between players (e.g. /pay) as well as server↔player.
  *            Stored in balances.yml under key "shards.<uuid>".
  *
+ * IMPORTANT: All currency values are whole numbers. Every mutation method rounds to the nearest
+ * integer before storing. Callers should also round computed values (e.g. after applying bonus
+ * multipliers) before displaying them, so messages match stored balances. This rounding here
+ * is the safety net — even if a caller forgets to round, fractional values never persist.
+ *
  * Enforcement of the tradeable/non-tradeable distinction happens at the command layer, not here.
  */
 public class CurrencyManager {
@@ -94,13 +99,13 @@ public class CurrencyManager {
     }
 
     public void addBalance(UUID uuid, double amount) {
-        goldCoins.put(uuid, getBalance(uuid) + amount);
+        goldCoins.put(uuid, (double) Math.round(getBalance(uuid) + amount));
         save();
     }
 
     /** Sets Gold Coins balance to an exact value (minimum 0). */
     public void setBalance(UUID uuid, double amount) {
-        goldCoins.put(uuid, Math.max(0.0, amount));
+        goldCoins.put(uuid, (double) Math.max(0, Math.round(amount)));
         save();
     }
 
@@ -115,7 +120,7 @@ public class CurrencyManager {
 
     /** Adds the specified amount to the player's Shards balance. */
     public void addShards(UUID uuid, double amount) {
-        shards.put(uuid, getShards(uuid) + amount);
+        shards.put(uuid, (double) Math.round(getShards(uuid) + amount));
         save();
     }
 
@@ -127,14 +132,14 @@ public class CurrencyManager {
     public boolean removeShards(UUID uuid, double amount) {
         double current = getShards(uuid);
         if (current < amount) return false;
-        shards.put(uuid, current - amount);
+        shards.put(uuid, (double) Math.round(current - amount));
         save();
         return true;
     }
 
     /** Sets the player's Shards balance to an exact value. */
     public void setShards(UUID uuid, double amount) {
-        shards.put(uuid, Math.max(0.0, amount));
+        shards.put(uuid, (double) Math.max(0, Math.round(amount)));
         save();
     }
 

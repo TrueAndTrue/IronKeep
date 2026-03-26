@@ -151,6 +151,26 @@ public class SkillCommand implements BasicCommand, Listener {
                 milestoneItem = new ItemStack(Material.GOLD_NUGGET);
                 milestoneMeta = milestoneItem.getItemMeta();
                 milestoneMeta.setDisplayName(ChatColor.GOLD + "Current: Level " + i);
+
+                int nextLevel = i + 1;
+                if (nextLevel <= levelCap) {
+                    List<String> nuggetLore = new ArrayList<>();
+                    nuggetLore.add(ChatColor.GRAY + "Next level rewards:");
+                    double nextGoldBonus = nextLevel * sm.getGoldBonusPerLevel();
+                    double nextShardBonus = nextLevel * sm.getShardBonusPerLevel();
+                    nuggetLore.add(ChatColor.GREEN + "  +" + formatBonusPct(nextGoldBonus) + "% Gold Coins");
+                    nuggetLore.add(ChatColor.AQUA + "  +" + formatBonusPct(nextShardBonus) + "% Shards");
+                    if (nextLevel % sm.getReductionEveryLevels() == 0) {
+                        nuggetLore.add(ChatColor.YELLOW + "  -1 required item (milestone!)");
+                    }
+                    nuggetLore.add("");
+                    nuggetLore.add(ChatColor.GRAY + "XP to next: " + ChatColor.YELLOW + formatNumber(sm.xpRequired(i) - xp));
+                    milestoneMeta.setLore(nuggetLore);
+                } else {
+                    List<String> nuggetLore = new ArrayList<>();
+                    nuggetLore.add(ChatColor.GOLD + "Max level reached!");
+                    milestoneMeta.setLore(nuggetLore);
+                }
             } else {
                 Material glass = unlocked ? Material.LIME_STAINED_GLASS_PANE : Material.GRAY_STAINED_GLASS_PANE;
                 milestoneItem = new ItemStack(glass);
@@ -159,11 +179,11 @@ public class SkillCommand implements BasicCommand, Listener {
                 milestoneMeta.setDisplayName(nameColor + "Level " + i);
             }
 
-            List<String> milestoneLore = new ArrayList<>();
-            if (i % 10 == 0) {
-                milestoneLore.add(ChatColor.GRAY + "Milestone: " + ChatColor.YELLOW + "-1 required item");
-                milestoneMeta.setLore(milestoneLore);
-            } else {
+            if (!isCurrent) {
+                List<String> milestoneLore = new ArrayList<>();
+                if (i % 10 == 0) {
+                    milestoneLore.add(ChatColor.GRAY + "Milestone: " + ChatColor.YELLOW + "-1 required item");
+                }
                 milestoneMeta.setLore(milestoneLore);
             }
             milestoneItem.setItemMeta(milestoneMeta);

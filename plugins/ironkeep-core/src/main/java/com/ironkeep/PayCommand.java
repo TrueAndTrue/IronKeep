@@ -42,12 +42,12 @@ public class PayCommand implements BasicCommand {
             return;
         }
 
-        // Parse amount first (fail fast on bad input)
-        double amount;
+        // Parse amount as whole number (all currency values are integers)
+        long amount;
         try {
-            amount = Double.parseDouble(args[1]);
+            amount = Long.parseLong(args[1]);
         } catch (NumberFormatException e) {
-            sender.sendMessage(PREFIX + ChatColor.RED + "Invalid amount: " + args[1]);
+            sender.sendMessage(PREFIX + ChatColor.RED + "Amount must be a whole number.");
             return;
         }
 
@@ -99,9 +99,6 @@ public class PayCommand implements BasicCommand {
     }
 
     private String format(double amount) {
-        if (amount == Math.floor(amount)) {
-            return String.format("%,d", (long) amount);
-        }
-        return String.format("%,.2f", amount);
+        return String.format("%,d", Math.round(amount));
     }
 }

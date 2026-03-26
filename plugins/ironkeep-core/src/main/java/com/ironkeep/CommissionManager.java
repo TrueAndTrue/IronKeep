@@ -19,6 +19,7 @@ public class CommissionManager {
     private MailRoomManager mailRoomManager; // set after construction
     private KitchenManager kitchenManager;   // set after construction
     private SkillManager skillManager;       // set after construction
+    private DailyBonusManager dailyBonusManager; // set after construction
 
     public CommissionManager(CommissionRegistry registry, CommissionStateStore stateStore,
                              CurrencyManager currencyManager) {
@@ -45,6 +46,10 @@ public class CommissionManager {
 
     public void setSkillManager(SkillManager skillManager) {
         this.skillManager = skillManager;
+    }
+
+    public void setDailyBonusManager(DailyBonusManager dailyBonusManager) {
+        this.dailyBonusManager = dailyBonusManager;
     }
 
     public void assignCommission(Player player, String commissionId) {
@@ -150,7 +155,7 @@ public class CommissionManager {
         player.sendMessage(ChatColor.GOLD + "  Task:     " + ChatColor.YELLOW + def.getDescription());
         player.sendMessage(ChatColor.GOLD + "  Goal:     " + ChatColor.YELLOW
                 + def.getObjectiveQuantity() + "x " + formatItem(def.getObjectiveItem()));
-        player.sendMessage(ChatColor.GOLD + "  Reward:   " + ChatColor.YELLOW + formatCoins(def.getRewardAmount()));
+        player.sendMessage(ChatColor.GOLD + "  Reward:   " + ChatColor.YELLOW + Math.round(def.getRewardAmount()) + " Gold Coins");
         if (def.getType().equalsIgnoreCase("MAIL_SORTING") && mailRoomManager != null) {
             int rankNum = rankManager != null ? rankManager.getPlayerRank(uuid) : 1;
             mailRoomManager.assignMail(player, rankNum);
@@ -281,8 +286,8 @@ public class CommissionManager {
             skillShardsBonus = def.getShardsReward() * skillManager.getShardsBonus(uuid, def.getType());
         }
 
-        double goldReward = baseGold + skillGoldBonus;
-        double shardsReward = def.getShardsReward() + skillShardsBonus;
+        long goldReward = Math.round(baseGold + skillGoldBonus);
+        long shardsReward = Math.round(def.getShardsReward() + skillShardsBonus);
 
         currencyManager.addBalance(uuid, goldReward);
         if (shardsReward > 0) {
@@ -298,9 +303,9 @@ public class CommissionManager {
         stateStore.clearState(uuid);
 
         // Build reward message
-        String rewardMsg = ChatColor.YELLOW + formatCoins(goldReward) + " Gold Coins";
+        String rewardMsg = ChatColor.YELLOW + "" + goldReward + " Gold Coins";
         if (shardsReward > 0) {
-            rewardMsg += ChatColor.GREEN + " and " + ChatColor.AQUA + formatCoins(shardsReward) + " Shards";
+            rewardMsg += ChatColor.GREEN + " and " + ChatColor.AQUA + shardsReward + " Shards";
         }
         // Mention escape bonus if applicable
         if (escapeManager != null && escapeManager.getEscapeLevel(uuid) > 0) {
@@ -308,9 +313,10 @@ public class CommissionManager {
             rewardMsg += ChatColor.GRAY + " (+" + bonusPct + "% escape bonus)";
         }
         player.sendMessage(PREFIX + ChatColor.GREEN + "Commission complete! You earned " + rewardMsg + ChatColor.GREEN + ".");
-        player.sendMessage(ChatColor.GOLD + "  Gold Coins: " + ChatColor.YELLOW + formatCoins(currencyManager.getBalance(uuid)));
+        grantDailyBonus(player, uuid, def);
+        player.sendMessage(ChatColor.GOLD + "  Gold Coins: " + ChatColor.YELLOW + formatNumber(currencyManager.getBalance(uuid)));
         if (shardsReward > 0) {
-            player.sendMessage(ChatColor.AQUA + "  Shards:     " + ChatColor.WHITE + formatCoins(currencyManager.getShards(uuid)));
+            player.sendMessage(ChatColor.AQUA + "  Shards:     " + ChatColor.WHITE + formatNumber(currencyManager.getShards(uuid)));
         }
     }
 
@@ -326,26 +332,24 @@ public class CommissionManager {
         int correct = mailState.getCorrect();
         double accuracy = total > 0 ? (correct * 100.0 / total) : 0.0;
 
-        double maxGoldBonus = mailRoomManager.getMaxGoldBonus();
-        double maxShardsBonus = mailRoomManager.getMaxShardsBonus();
-        double goldBonus = maxGoldBonus * (accuracy / 100.0);
-        double shardsBonus = maxShardsBonus * (accuracy / 100.0);
+        long goldBonus = Math.round(mailRoomManager.getMaxGoldBonus() * (accuracy / 100.0));
+        long shardsBonus = Math.round(mailRoomManager.getMaxShardsBonus() * (accuracy / 100.0));
 
-        double baseGold = def.getRewardAmount();
+        long baseGold = Math.round(def.getRewardAmount());
         if (escapeManager != null) {
-            baseGold = escapeManager.applyBonus(uuid, baseGold);
+            baseGold = Math.round(escapeManager.applyBonus(uuid, baseGold));
         }
 
         // Apply skill bonuses
-        double skillGoldBonus = 0;
-        double skillShardsBonus = 0;
+        long skillGoldBonus = 0;
+        long skillShardsBonus = 0;
         if (skillManager != null) {
-            skillGoldBonus = baseGold * skillManager.getGoldBonus(uuid, def.getType());
-            skillShardsBonus = def.getShardsReward() * skillManager.getShardsBonus(uuid, def.getType());
+            skillGoldBonus = Math.round(baseGold * skillManager.getGoldBonus(uuid, def.getType()));
+            skillShardsBonus = Math.round(def.getShardsReward() * skillManager.getShardsBonus(uuid, def.getType()));
         }
 
-        double totalGold = baseGold + goldBonus + skillGoldBonus;
-        double totalShards = def.getShardsReward() + shardsBonus + skillShardsBonus;
+        long totalGold = baseGold + goldBonus + skillGoldBonus;
+        long totalShards = Math.round(def.getShardsReward()) + shardsBonus + skillShardsBonus;
 
         currencyManager.addBalance(uuid, totalGold);
         if (totalShards > 0) {
@@ -372,15 +376,16 @@ public class CommissionManager {
                 + String.format("%.0f%%", accuracy)
                 + ChatColor.GRAY + " (" + correct + "/" + total + " correct)");
         player.sendMessage(ChatColor.GOLD + "  Base reward:  " + ChatColor.YELLOW
-                + formatNumber(baseGold) + " Gold Coins"
-                + (def.getShardsReward() > 0 ? ChatColor.GOLD + " + " + ChatColor.AQUA + formatNumber(def.getShardsReward()) + " Shards" : "")
+                + baseGold + " Gold Coins"
+                + (def.getShardsReward() > 0 ? ChatColor.GOLD + " + " + ChatColor.AQUA + Math.round(def.getShardsReward()) + " Shards" : "")
                 + escapePart);
         player.sendMessage(ChatColor.GOLD + "  Accuracy bonus: " + ChatColor.YELLOW
-                + formatNumber(goldBonus) + " Gold Coins"
-                + (shardsBonus > 0 ? ChatColor.GOLD + " + " + ChatColor.AQUA + formatNumber(shardsBonus) + " Shards" : ""));
+                + goldBonus + " Gold Coins"
+                + (shardsBonus > 0 ? ChatColor.GOLD + " + " + ChatColor.AQUA + shardsBonus + " Shards" : ""));
         player.sendMessage(ChatColor.GOLD + "  Total earned: " + ChatColor.YELLOW
-                + formatNumber(totalGold) + " Gold Coins"
-                + (totalShards > 0 ? ChatColor.GOLD + " + " + ChatColor.AQUA + formatNumber(totalShards) + " Shards" : ""));
+                + totalGold + " Gold Coins"
+                + (totalShards > 0 ? ChatColor.GOLD + " + " + ChatColor.AQUA + totalShards + " Shards" : ""));
+        grantDailyBonus(player, uuid, def);
         player.sendMessage(ChatColor.GOLD + "  Gold Coins: " + ChatColor.YELLOW
                 + formatNumber(currencyManager.getBalance(uuid)));
         if (totalShards > 0) {
@@ -419,26 +424,24 @@ public class CommissionManager {
         }
         double accuracy = n > 0 ? (correct * 100.0 / n) : 0.0;
 
-        double maxGoldBonus = kitchenManager.getMaxGoldBonus();
-        double maxShardsBonus = kitchenManager.getMaxShardsBonus();
-        double goldBonus = maxGoldBonus * (accuracy / 100.0);
-        double shardsBonus = maxShardsBonus * (accuracy / 100.0);
+        long goldBonus = Math.round(kitchenManager.getMaxGoldBonus() * (accuracy / 100.0));
+        long shardsBonus = Math.round(kitchenManager.getMaxShardsBonus() * (accuracy / 100.0));
 
-        double baseGold = def.getRewardAmount();
+        long baseGold = Math.round(def.getRewardAmount());
         if (escapeManager != null) {
-            baseGold = escapeManager.applyBonus(uuid, baseGold);
+            baseGold = Math.round(escapeManager.applyBonus(uuid, baseGold));
         }
 
         // Apply skill bonuses
-        double skillGoldBonus = 0;
-        double skillShardsBonus = 0;
+        long skillGoldBonus = 0;
+        long skillShardsBonus = 0;
         if (skillManager != null) {
-            skillGoldBonus = baseGold * skillManager.getGoldBonus(uuid, def.getType());
-            skillShardsBonus = def.getShardsReward() * skillManager.getShardsBonus(uuid, def.getType());
+            skillGoldBonus = Math.round(baseGold * skillManager.getGoldBonus(uuid, def.getType()));
+            skillShardsBonus = Math.round(def.getShardsReward() * skillManager.getShardsBonus(uuid, def.getType()));
         }
 
-        double totalGold = baseGold + goldBonus + skillGoldBonus;
-        double totalShards = def.getShardsReward() + shardsBonus + skillShardsBonus;
+        long totalGold = baseGold + goldBonus + skillGoldBonus;
+        long totalShards = Math.round(def.getShardsReward()) + shardsBonus + skillShardsBonus;
 
         currencyManager.addBalance(uuid, totalGold);
         if (totalShards > 0) {
@@ -465,21 +468,22 @@ public class CommissionManager {
                 + String.format("%.0f%%", accuracy)
                 + ChatColor.GRAY + " (" + correct + "/" + n + " correct)");
         player.sendMessage(ChatColor.GOLD + "  Base reward:  " + ChatColor.YELLOW
-                + formatNumber(baseGold) + " Gold Coins"
+                + baseGold + " Gold Coins"
                 + (def.getShardsReward() > 0
-                        ? ChatColor.GOLD + " + " + ChatColor.AQUA + formatNumber(def.getShardsReward()) + " Shards"
+                        ? ChatColor.GOLD + " + " + ChatColor.AQUA + Math.round(def.getShardsReward()) + " Shards"
                         : "")
                 + escapePart);
         player.sendMessage(ChatColor.GOLD + "  Accuracy bonus: " + ChatColor.YELLOW
-                + formatNumber(goldBonus) + " Gold Coins"
+                + goldBonus + " Gold Coins"
                 + (shardsBonus > 0
-                        ? ChatColor.GOLD + " + " + ChatColor.AQUA + formatNumber(shardsBonus) + " Shards"
+                        ? ChatColor.GOLD + " + " + ChatColor.AQUA + shardsBonus + " Shards"
                         : ""));
         player.sendMessage(ChatColor.GOLD + "  Total earned: " + ChatColor.YELLOW
-                + formatNumber(totalGold) + " Gold Coins"
+                + totalGold + " Gold Coins"
                 + (totalShards > 0
-                        ? ChatColor.GOLD + " + " + ChatColor.AQUA + formatNumber(totalShards) + " Shards"
+                        ? ChatColor.GOLD + " + " + ChatColor.AQUA + totalShards + " Shards"
                         : ""));
+        grantDailyBonus(player, uuid, def);
         player.sendMessage(ChatColor.GOLD + "  Gold Coins: " + ChatColor.YELLOW
                 + formatNumber(currencyManager.getBalance(uuid)));
         if (totalShards > 0) {
@@ -489,8 +493,7 @@ public class CommissionManager {
     }
 
     private String formatNumber(double amount) {
-        if (amount == Math.floor(amount)) return String.valueOf((long) amount);
-        return String.format("%.2f", amount);
+        return String.format("%,d", Math.round(amount));
     }
 
     private int countItem(Player player, Material material) {
@@ -508,10 +511,29 @@ public class CommissionManager {
         return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
     }
 
-    private String formatCoins(double amount) {
-        if (amount == Math.floor(amount)) {
-            return (long) amount + " Gold Coins";
+    /**
+     * Checks and grants the daily first-completion bonus for a commission type.
+     * Called after normal rewards are granted. Adds bonus Gold Coins and skill XP.
+     */
+    private void grantDailyBonus(Player player, UUID uuid, CommissionDefinition def) {
+        if (dailyBonusManager == null) return;
+        if (!dailyBonusManager.isBonusAvailable(uuid, def.getType())) return;
+
+        int goldBonus = dailyBonusManager.getGoldBonus();
+        int xpBonus = dailyBonusManager.getXpBonus();
+
+        if (goldBonus > 0) {
+            currencyManager.addBalance(uuid, goldBonus);
         }
-        return String.format("%.2f Gold Coins", amount);
+        if (xpBonus > 0 && skillManager != null) {
+            skillManager.grantXp(uuid, def.getType(), xpBonus);
+        }
+
+        dailyBonusManager.markClaimed(uuid, def.getType());
+
+        player.sendMessage(ChatColor.LIGHT_PURPLE + "[Daily Bonus] " + ChatColor.GREEN
+                + "First " + formatItem(def.getType()) + " commission today! +"
+                + goldBonus + " Gold Coins"
+                + (xpBonus > 0 ? ", +" + xpBonus + " XP" : ""));
     }
 }

@@ -41,6 +41,9 @@ if exist "%PLUGIN%\data\player-escapes.yml" del "%PLUGIN%\data\player-escapes.ym
 REM Daily quest state
 if exist "%PLUGIN%\data\daily-quest.yml" del "%PLUGIN%\data\daily-quest.yml"
 
+REM Daily commission bonus state
+if exist "%PLUGIN%\data\daily-commission-bonus.yml" del "%PLUGIN%\data\daily-commission-bonus.yml"
+
 REM First-join flags
 if exist "%PLUGIN%\received-kits.yml" del "%PLUGIN%\received-kits.yml"
 if exist "%PLUGIN%\warden-seen.yml" del "%PLUGIN%\warden-seen.yml"

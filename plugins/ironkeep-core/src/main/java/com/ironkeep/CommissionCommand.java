@@ -73,8 +73,8 @@ public class CommissionCommand implements BasicCommand {
         player.sendMessage(ChatColor.GOLD + "  Task:     " + ChatColor.YELLOW + def.getDescription());
         player.sendMessage(ChatColor.GOLD + "  Progress: " + ChatColor.YELLOW
                 + state.getProgress() + "/" + def.getObjectiveQuantity());
-        player.sendMessage(ChatColor.GOLD + "  Reward:   " + ChatColor.YELLOW + formatCoins(def.getRewardAmount()) + " Gold Coins"
-                + (def.getShardsReward() > 0 ? ChatColor.GOLD + " + " + ChatColor.AQUA + formatCoins(def.getShardsReward()) + " Shards" : ""));
+        player.sendMessage(ChatColor.GOLD + "  Reward:   " + ChatColor.YELLOW + Math.round(def.getRewardAmount()) + " Gold Coins"
+                + (def.getShardsReward() > 0 ? ChatColor.GOLD + " + " + ChatColor.AQUA + Math.round(def.getShardsReward()) + " Shards" : ""));
     }
 
     private void handleList(Player player) {
@@ -170,10 +170,4 @@ public class CommissionCommand implements BasicCommand {
         }
     }
 
-    private String formatCoins(double amount) {
-        if (amount == Math.floor(amount)) {
-            return (long) amount + " Gold Coins";
-        }
-        return String.format("%.2f Gold Coins", amount);
-    }
 }
