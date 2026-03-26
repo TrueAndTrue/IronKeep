@@ -49,13 +49,13 @@ public class DailyQuestListener implements Listener, BasicCommand {
         player.sendMessage(ChatColor.GREEN + "--- " + ChatColor.YELLOW + "Daily Quest" + ChatColor.GREEN + " ---");
         player.sendMessage(ChatColor.GOLD + "  Objective: " + ChatColor.WHITE + mgr.getQuestObjective());
 
-        double goldReward = mgr.getGoldReward();
+        long goldReward = Math.round(mgr.getGoldReward());
         // Apply escape bonus for display
         if (plugin.getEscapeManager() != null) {
-            goldReward = plugin.getEscapeManager().applyBonus(uuid, goldReward);
+            goldReward = Math.round(plugin.getEscapeManager().applyBonus(uuid, goldReward));
         }
-        player.sendMessage(ChatColor.GOLD + "  Reward:    " + ChatColor.YELLOW + format(goldReward) + " Gold Coins"
-                + ChatColor.AQUA + " + " + format(mgr.getShardsReward()) + " Shards");
+        player.sendMessage(ChatColor.GOLD + "  Reward:    " + ChatColor.YELLOW + goldReward + " Gold Coins"
+                + ChatColor.AQUA + " + " + Math.round(mgr.getShardsReward()) + " Shards");
 
         if (mgr.hasCompleted(uuid)) {
             String nextReset = TIME_FMT.format(Instant.ofEpochSecond(mgr.nextResetEpoch()));
@@ -79,23 +79,23 @@ public class DailyQuestListener implements Listener, BasicCommand {
 
         // Grant rewards on main thread
         plugin.getServer().getScheduler().runTask(plugin, () -> {
-            double goldReward = mgr.getGoldReward();
+            long goldAmount = Math.round(mgr.getGoldReward());
             if (plugin.getEscapeManager() != null) {
-                goldReward = plugin.getEscapeManager().applyBonus(uuid, goldReward);
+                goldAmount = Math.round(plugin.getEscapeManager().applyBonus(uuid, goldAmount));
             }
-            plugin.getCurrencyManager().addBalance(uuid, goldReward);
-            plugin.getCurrencyManager().addShards(uuid, mgr.getShardsReward());
+            long shardsAmount = Math.round(mgr.getShardsReward());
+            plugin.getCurrencyManager().addBalance(uuid, goldAmount);
+            plugin.getCurrencyManager().addShards(uuid, shardsAmount);
             mgr.markCompleted(uuid);
 
             player.sendMessage(PREFIX + ChatColor.GREEN + "Daily quest complete! You earned "
-                    + ChatColor.YELLOW + format(goldReward) + " Gold Coins"
+                    + ChatColor.YELLOW + goldAmount + " Gold Coins"
                     + ChatColor.GREEN + " and "
-                    + ChatColor.AQUA + format(mgr.getShardsReward()) + " Shards" + ChatColor.GREEN + ".");
+                    + ChatColor.AQUA + shardsAmount + " Shards" + ChatColor.GREEN + ".");
         });
     }
 
     private String format(double amount) {
-        if (amount == Math.floor(amount)) return String.format("%,d", (long) amount);
-        return String.format("%,.2f", amount);
+        return String.format("%,d", Math.round(amount));
     }
 }

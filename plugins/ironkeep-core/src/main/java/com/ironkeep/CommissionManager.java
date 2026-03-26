@@ -14,8 +14,12 @@ public class CommissionManager {
     private final CommissionRegistry registry;
     private final CommissionStateStore stateStore;
     private final CurrencyManager currencyManager;
-    private RankManager rankManager;     // set after construction to avoid circular dependency
-    private EscapeManager escapeManager; // set after construction
+    private RankManager rankManager;         // set after construction to avoid circular dependency
+    private EscapeManager escapeManager;     // set after construction
+    private MailRoomManager mailRoomManager; // set after construction
+    private KitchenManager kitchenManager;   // set after construction
+    private SkillManager skillManager;       // set after construction
+    private DailyBonusManager dailyBonusManager; // set after construction
 
     public CommissionManager(CommissionRegistry registry, CommissionStateStore stateStore,
                              CurrencyManager currencyManager) {
@@ -30,6 +34,22 @@ public class CommissionManager {
 
     public void setEscapeManager(EscapeManager escapeManager) {
         this.escapeManager = escapeManager;
+    }
+
+    public void setMailRoomManager(MailRoomManager mailRoomManager) {
+        this.mailRoomManager = mailRoomManager;
+    }
+
+    public void setKitchenManager(KitchenManager kitchenManager) {
+        this.kitchenManager = kitchenManager;
+    }
+
+    public void setSkillManager(SkillManager skillManager) {
+        this.skillManager = skillManager;
+    }
+
+    public void setDailyBonusManager(DailyBonusManager dailyBonusManager) {
+        this.dailyBonusManager = dailyBonusManager;
     }
 
     public void assignCommission(Player player, String commissionId) {
@@ -53,13 +73,50 @@ public class CommissionManager {
         PlayerCommissionState state = new PlayerCommissionState(uuid);
         state.setActiveCommissionId(def.getId());
         state.setProgress(0);
+        // Apply skill-based objective reduction
+        if (skillManager != null) {
+            int reduction = skillManager.getObjectiveReduction(uuid, def.getType());
+            if (reduction > 0) {
+                int reduced = Math.max(1, def.getObjectiveQuantity() - reduction);
+                state.setOverrideQuantity(reduced);
+            }
+        }
         stateStore.setState(uuid, state);
         player.sendMessage(PREFIX + ChatColor.GREEN + "Commission accepted: "
                 + def.getDisplayName() + " — " + def.getDescription());
+        if (def.getType().equalsIgnoreCase("MAIL_SORTING") && mailRoomManager != null) {
+            int rankNum = rankManager != null ? rankManager.getPlayerRank(uuid) : 1;
+            mailRoomManager.assignMail(player, rankNum);
+        }
+        if (def.getType().equalsIgnoreCase("COOKING") && kitchenManager != null) {
+            int rankNum = rankManager != null ? rankManager.getPlayerRank(uuid) : 1;
+            kitchenManager.assignRecipe(player, rankNum);
+        }
     }
 
     /** Cancels a player's active commission without reward. */
     public void cancelCommission(UUID uuid) {
+        // If the cancelled commission is MAIL_SORTING, clear any mail items
+        if (mailRoomManager != null) {
+            PlayerCommissionState cs = stateStore.getState(uuid);
+            if (cs != null && cs.getActiveCommissionId() != null) {
+                CommissionDefinition def = registry.getById(cs.getActiveCommissionId());
+                if (def != null && def.getType().equalsIgnoreCase("MAIL_SORTING")) {
+                    org.bukkit.entity.Player player = org.bukkit.Bukkit.getPlayer(uuid);
+                    if (player != null) mailRoomManager.clearMail(player);
+                }
+            }
+        }
+        if (kitchenManager != null) {
+            PlayerCommissionState cs = stateStore.getState(uuid);
+            if (cs != null && cs.getActiveCommissionId() != null) {
+                CommissionDefinition def = registry.getById(cs.getActiveCommissionId());
+                if (def != null && def.getType().equalsIgnoreCase("COOKING")) {
+                    org.bukkit.entity.Player player = org.bukkit.Bukkit.getPlayer(uuid);
+                    if (player != null) kitchenManager.clearCooking(player);
+                }
+            }
+        }
         stateStore.clearState(uuid);
     }
 
@@ -83,6 +140,14 @@ public class CommissionManager {
         PlayerCommissionState state = new PlayerCommissionState(uuid);
         state.setActiveCommissionId(def.getId());
         state.setProgress(0);
+        // Apply skill-based objective reduction
+        if (skillManager != null) {
+            int reduction = skillManager.getObjectiveReduction(uuid, def.getType());
+            if (reduction > 0) {
+                int reduced = Math.max(1, def.getObjectiveQuantity() - reduction);
+                state.setOverrideQuantity(reduced);
+            }
+        }
         stateStore.setState(uuid, state);
 
         player.sendMessage(PREFIX + ChatColor.GREEN + "New commission assigned!");
@@ -90,7 +155,15 @@ public class CommissionManager {
         player.sendMessage(ChatColor.GOLD + "  Task:     " + ChatColor.YELLOW + def.getDescription());
         player.sendMessage(ChatColor.GOLD + "  Goal:     " + ChatColor.YELLOW
                 + def.getObjectiveQuantity() + "x " + formatItem(def.getObjectiveItem()));
-        player.sendMessage(ChatColor.GOLD + "  Reward:   " + ChatColor.YELLOW + formatCoins(def.getRewardAmount()));
+        player.sendMessage(ChatColor.GOLD + "  Reward:   " + ChatColor.YELLOW + Math.round(def.getRewardAmount()) + " Gold Coins");
+        if (def.getType().equalsIgnoreCase("MAIL_SORTING") && mailRoomManager != null) {
+            int rankNum = rankManager != null ? rankManager.getPlayerRank(uuid) : 1;
+            mailRoomManager.assignMail(player, rankNum);
+        }
+        if (def.getType().equalsIgnoreCase("COOKING") && kitchenManager != null) {
+            int rankNum = rankManager != null ? rankManager.getPlayerRank(uuid) : 1;
+            kitchenManager.assignRecipe(player, rankNum);
+        }
     }
 
     public void incrementProgress(UUID uuid, int amount) {
@@ -103,7 +176,8 @@ public class CommissionManager {
         state.setProgress(newProgress);
         stateStore.setState(uuid, state);
 
-        if (newProgress >= def.getObjectiveQuantity()) {
+        int effectiveQty = state.getEffectiveQuantity(def.getObjectiveQuantity());
+        if (newProgress >= effectiveQty) {
             org.bukkit.entity.Player player = org.bukkit.Bukkit.getPlayer(uuid);
             if (player != null) {
                 player.sendMessage(org.bukkit.ChatColor.GREEN
@@ -123,7 +197,8 @@ public class CommissionManager {
         state.setProgress(newProgress);
         stateStore.setState(uuid, state);
 
-        if (newProgress >= def.getObjectiveQuantity()) {
+        int effectiveQty = state.getEffectiveQuantity(def.getObjectiveQuantity());
+        if (newProgress >= effectiveQty) {
             player.sendMessage(ChatColor.GREEN
                     + "Commission objective reached! Use /commission complete to turn in.");
         }
@@ -162,20 +237,32 @@ public class CommissionManager {
             stateStore.clearState(uuid);
             return;
         }
-        if (state.getProgress() < def.getObjectiveQuantity()) {
-            int remaining = def.getObjectiveQuantity() - state.getProgress();
+        // MAIL_SORTING and COOKING have their own completion logic — skip the standard progress check
+        if (def.getType().equalsIgnoreCase("MAIL_SORTING")) {
+            completeMailSorting(player, uuid, def, state);
+            return;
+        }
+        if (def.getType().equalsIgnoreCase("COOKING")) {
+            completeCooking(player, uuid, def, state);
+            return;
+        }
+
+        int effectiveQty = state.getEffectiveQuantity(def.getObjectiveQuantity());
+        if (state.getProgress() < effectiveQty) {
+            int remaining = effectiveQty - state.getProgress();
             player.sendMessage(PREFIX + ChatColor.RED + "Commission not yet complete. Progress: "
-                    + ChatColor.YELLOW + state.getProgress() + "/" + def.getObjectiveQuantity()
+                    + ChatColor.YELLOW + state.getProgress() + "/" + effectiveQty
                     + ChatColor.RED + " (" + remaining + " remaining).");
             return;
         }
+
         // Use turn-in item for inventory check (may differ from objective block, e.g. COAL_ORE -> COAL)
         Material material = Material.matchMaterial(def.getTurnInItem());
         if (material == null) {
             player.sendMessage(PREFIX + ChatColor.RED + "Commission item is misconfigured. Contact an admin.");
             return;
         }
-        int needed = def.getObjectiveQuantity();
+        int needed = effectiveQty;
         int inInventory = countItem(player, material);
         if (inInventory < needed) {
             player.sendMessage(PREFIX + ChatColor.RED + "You don't have the required items. Need "
@@ -186,20 +273,39 @@ public class CommissionManager {
         player.getInventory().removeItem(new ItemStack(material, needed));
 
         // Apply escape bonus to Gold Coins only (Shards are unaffected)
-        double goldReward = def.getRewardAmount();
+        double baseGold = def.getRewardAmount();
         if (escapeManager != null) {
-            goldReward = escapeManager.applyBonus(uuid, goldReward);
+            baseGold = escapeManager.applyBonus(uuid, baseGold);
         }
+
+        // Apply skill bonuses
+        double skillGoldBonus = 0;
+        double skillShardsBonus = 0;
+        if (skillManager != null) {
+            skillGoldBonus = baseGold * skillManager.getGoldBonus(uuid, def.getType());
+            skillShardsBonus = def.getShardsReward() * skillManager.getShardsBonus(uuid, def.getType());
+        }
+
+        long goldReward = Math.round(baseGold + skillGoldBonus);
+        long shardsReward = Math.round(def.getShardsReward() + skillShardsBonus);
+
         currencyManager.addBalance(uuid, goldReward);
-        if (def.getShardsReward() > 0) {
-            currencyManager.addShards(uuid, def.getShardsReward());
+        if (shardsReward > 0) {
+            currencyManager.addShards(uuid, shardsReward);
         }
+
+        // Grant skill XP
+        if (skillManager != null) {
+            double xpAmount = skillManager.getXpForType(def.getType());
+            if (xpAmount > 0) skillManager.grantXp(uuid, def.getType(), xpAmount);
+        }
+
         stateStore.clearState(uuid);
 
         // Build reward message
-        String rewardMsg = ChatColor.YELLOW + formatCoins(goldReward) + " Gold Coins";
-        if (def.getShardsReward() > 0) {
-            rewardMsg += ChatColor.GREEN + " and " + ChatColor.AQUA + formatCoins(def.getShardsReward()) + " Shards";
+        String rewardMsg = ChatColor.YELLOW + "" + goldReward + " Gold Coins";
+        if (shardsReward > 0) {
+            rewardMsg += ChatColor.GREEN + " and " + ChatColor.AQUA + shardsReward + " Shards";
         }
         // Mention escape bonus if applicable
         if (escapeManager != null && escapeManager.getEscapeLevel(uuid) > 0) {
@@ -207,10 +313,187 @@ public class CommissionManager {
             rewardMsg += ChatColor.GRAY + " (+" + bonusPct + "% escape bonus)";
         }
         player.sendMessage(PREFIX + ChatColor.GREEN + "Commission complete! You earned " + rewardMsg + ChatColor.GREEN + ".");
-        player.sendMessage(ChatColor.GOLD + "  Gold Coins: " + ChatColor.YELLOW + formatCoins(currencyManager.getBalance(uuid)));
-        if (def.getShardsReward() > 0) {
-            player.sendMessage(ChatColor.AQUA + "  Shards:     " + ChatColor.WHITE + formatCoins(currencyManager.getShards(uuid)));
+        grantDailyBonus(player, uuid, def);
+        player.sendMessage(ChatColor.GOLD + "  Gold Coins: " + ChatColor.YELLOW + formatNumber(currencyManager.getBalance(uuid)));
+        if (shardsReward > 0) {
+            player.sendMessage(ChatColor.AQUA + "  Shards:     " + ChatColor.WHITE + formatNumber(currencyManager.getShards(uuid)));
         }
+    }
+
+    private void completeMailSorting(Player player, UUID uuid, CommissionDefinition def,
+                                     PlayerCommissionState state) {
+        MailSortingState mailState = mailRoomManager != null ? mailRoomManager.getState(uuid) : null;
+        if (mailState == null || !mailState.isComplete()) {
+            player.sendMessage(PREFIX + ChatColor.RED + "Deliver all mail to the barrels first!");
+            return;
+        }
+
+        int total = mailState.getTotalMail();
+        int correct = mailState.getCorrect();
+        double accuracy = total > 0 ? (correct * 100.0 / total) : 0.0;
+
+        long goldBonus = Math.round(mailRoomManager.getMaxGoldBonus() * (accuracy / 100.0));
+        long shardsBonus = Math.round(mailRoomManager.getMaxShardsBonus() * (accuracy / 100.0));
+
+        long baseGold = Math.round(def.getRewardAmount());
+        if (escapeManager != null) {
+            baseGold = Math.round(escapeManager.applyBonus(uuid, baseGold));
+        }
+
+        // Apply skill bonuses
+        long skillGoldBonus = 0;
+        long skillShardsBonus = 0;
+        if (skillManager != null) {
+            skillGoldBonus = Math.round(baseGold * skillManager.getGoldBonus(uuid, def.getType()));
+            skillShardsBonus = Math.round(def.getShardsReward() * skillManager.getShardsBonus(uuid, def.getType()));
+        }
+
+        long totalGold = baseGold + goldBonus + skillGoldBonus;
+        long totalShards = Math.round(def.getShardsReward()) + shardsBonus + skillShardsBonus;
+
+        currencyManager.addBalance(uuid, totalGold);
+        if (totalShards > 0) {
+            currencyManager.addShards(uuid, totalShards);
+        }
+
+        // Grant skill XP
+        if (skillManager != null) {
+            double xpAmount = skillManager.getXpForType(def.getType());
+            if (xpAmount > 0) skillManager.grantXp(uuid, def.getType(), xpAmount);
+        }
+
+        if (mailRoomManager != null) mailRoomManager.clearMail(player);
+        stateStore.clearState(uuid);
+
+        String escapePart = "";
+        if (escapeManager != null && escapeManager.getEscapeLevel(uuid) > 0) {
+            int bonusPct = (int) ((escapeManager.getGoldCoinMultiplier(uuid) - 1.0) * 100);
+            escapePart = ChatColor.GRAY + " (+" + bonusPct + "% escape bonus)";
+        }
+
+        player.sendMessage(PREFIX + ChatColor.GREEN + "Commission complete!");
+        player.sendMessage(ChatColor.GOLD + "  Accuracy: " + ChatColor.YELLOW
+                + String.format("%.0f%%", accuracy)
+                + ChatColor.GRAY + " (" + correct + "/" + total + " correct)");
+        player.sendMessage(ChatColor.GOLD + "  Base reward:  " + ChatColor.YELLOW
+                + baseGold + " Gold Coins"
+                + (def.getShardsReward() > 0 ? ChatColor.GOLD + " + " + ChatColor.AQUA + Math.round(def.getShardsReward()) + " Shards" : "")
+                + escapePart);
+        player.sendMessage(ChatColor.GOLD + "  Accuracy bonus: " + ChatColor.YELLOW
+                + goldBonus + " Gold Coins"
+                + (shardsBonus > 0 ? ChatColor.GOLD + " + " + ChatColor.AQUA + shardsBonus + " Shards" : ""));
+        player.sendMessage(ChatColor.GOLD + "  Total earned: " + ChatColor.YELLOW
+                + totalGold + " Gold Coins"
+                + (totalShards > 0 ? ChatColor.GOLD + " + " + ChatColor.AQUA + totalShards + " Shards" : ""));
+        grantDailyBonus(player, uuid, def);
+        player.sendMessage(ChatColor.GOLD + "  Gold Coins: " + ChatColor.YELLOW
+                + formatNumber(currencyManager.getBalance(uuid)));
+        if (totalShards > 0) {
+            player.sendMessage(ChatColor.AQUA + "  Shards:     " + ChatColor.WHITE
+                    + formatNumber(currencyManager.getShards(uuid)));
+        }
+    }
+
+    private void completeCooking(Player player, UUID uuid, CommissionDefinition def,
+                                 PlayerCommissionState state) {
+        CookingState cookingState = kitchenManager != null ? kitchenManager.getState(uuid) : null;
+        if (cookingState == null || !cookingState.isReadyToTurnIn()) {
+            player.sendMessage(PREFIX + ChatColor.RED
+                    + "Complete your dish in the Kitchen first! Use the cauldron to confirm your ingredients.");
+            return;
+        }
+
+        CookingRecipe recipe = kitchenManager.getRecipe(cookingState.getRecipeId());
+        if (recipe == null) {
+            player.sendMessage(PREFIX + ChatColor.RED
+                    + "Recipe not found. Commission cancelled.");
+            if (kitchenManager != null) kitchenManager.clearCooking(player);
+            stateStore.clearState(uuid);
+            return;
+        }
+
+        // Calculate accuracy: positions that match the expected order
+        java.util.List<Material> confirmed = cookingState.getConfirmedIngredients();
+        java.util.List<Material> expected = recipe.getIngredients();
+        int n = expected.size();
+        int correct = 0;
+        if (confirmed != null) {
+            for (int i = 0; i < Math.min(confirmed.size(), n); i++) {
+                if (confirmed.get(i) == expected.get(i)) correct++;
+            }
+        }
+        double accuracy = n > 0 ? (correct * 100.0 / n) : 0.0;
+
+        long goldBonus = Math.round(kitchenManager.getMaxGoldBonus() * (accuracy / 100.0));
+        long shardsBonus = Math.round(kitchenManager.getMaxShardsBonus() * (accuracy / 100.0));
+
+        long baseGold = Math.round(def.getRewardAmount());
+        if (escapeManager != null) {
+            baseGold = Math.round(escapeManager.applyBonus(uuid, baseGold));
+        }
+
+        // Apply skill bonuses
+        long skillGoldBonus = 0;
+        long skillShardsBonus = 0;
+        if (skillManager != null) {
+            skillGoldBonus = Math.round(baseGold * skillManager.getGoldBonus(uuid, def.getType()));
+            skillShardsBonus = Math.round(def.getShardsReward() * skillManager.getShardsBonus(uuid, def.getType()));
+        }
+
+        long totalGold = baseGold + goldBonus + skillGoldBonus;
+        long totalShards = Math.round(def.getShardsReward()) + shardsBonus + skillShardsBonus;
+
+        currencyManager.addBalance(uuid, totalGold);
+        if (totalShards > 0) {
+            currencyManager.addShards(uuid, totalShards);
+        }
+
+        // Grant skill XP
+        if (skillManager != null) {
+            double xpAmount = skillManager.getXpForType(def.getType());
+            if (xpAmount > 0) skillManager.grantXp(uuid, def.getType(), xpAmount);
+        }
+
+        kitchenManager.clearCooking(player);
+        stateStore.clearState(uuid);
+
+        String escapePart = "";
+        if (escapeManager != null && escapeManager.getEscapeLevel(uuid) > 0) {
+            int bonusPct = (int) ((escapeManager.getGoldCoinMultiplier(uuid) - 1.0) * 100);
+            escapePart = ChatColor.GRAY + " (+" + bonusPct + "% escape bonus)";
+        }
+
+        player.sendMessage(PREFIX + ChatColor.GREEN + "Commission complete!");
+        player.sendMessage(ChatColor.GOLD + "  Accuracy: " + ChatColor.YELLOW
+                + String.format("%.0f%%", accuracy)
+                + ChatColor.GRAY + " (" + correct + "/" + n + " correct)");
+        player.sendMessage(ChatColor.GOLD + "  Base reward:  " + ChatColor.YELLOW
+                + baseGold + " Gold Coins"
+                + (def.getShardsReward() > 0
+                        ? ChatColor.GOLD + " + " + ChatColor.AQUA + Math.round(def.getShardsReward()) + " Shards"
+                        : "")
+                + escapePart);
+        player.sendMessage(ChatColor.GOLD + "  Accuracy bonus: " + ChatColor.YELLOW
+                + goldBonus + " Gold Coins"
+                + (shardsBonus > 0
+                        ? ChatColor.GOLD + " + " + ChatColor.AQUA + shardsBonus + " Shards"
+                        : ""));
+        player.sendMessage(ChatColor.GOLD + "  Total earned: " + ChatColor.YELLOW
+                + totalGold + " Gold Coins"
+                + (totalShards > 0
+                        ? ChatColor.GOLD + " + " + ChatColor.AQUA + totalShards + " Shards"
+                        : ""));
+        grantDailyBonus(player, uuid, def);
+        player.sendMessage(ChatColor.GOLD + "  Gold Coins: " + ChatColor.YELLOW
+                + formatNumber(currencyManager.getBalance(uuid)));
+        if (totalShards > 0) {
+            player.sendMessage(ChatColor.AQUA + "  Shards:     " + ChatColor.WHITE
+                    + formatNumber(currencyManager.getShards(uuid)));
+        }
+    }
+
+    private String formatNumber(double amount) {
+        return String.format("%,d", Math.round(amount));
     }
 
     private int countItem(Player player, Material material) {
@@ -228,10 +511,29 @@ public class CommissionManager {
         return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
     }
 
-    private String formatCoins(double amount) {
-        if (amount == Math.floor(amount)) {
-            return (long) amount + " Gold Coins";
+    /**
+     * Checks and grants the daily first-completion bonus for a commission type.
+     * Called after normal rewards are granted. Adds bonus Gold Coins and skill XP.
+     */
+    private void grantDailyBonus(Player player, UUID uuid, CommissionDefinition def) {
+        if (dailyBonusManager == null) return;
+        if (!dailyBonusManager.isBonusAvailable(uuid, def.getType())) return;
+
+        int goldBonus = dailyBonusManager.getGoldBonus();
+        int xpBonus = dailyBonusManager.getXpBonus();
+
+        if (goldBonus > 0) {
+            currencyManager.addBalance(uuid, goldBonus);
         }
-        return String.format("%.2f Gold Coins", amount);
+        if (xpBonus > 0 && skillManager != null) {
+            skillManager.grantXp(uuid, def.getType(), xpBonus);
+        }
+
+        dailyBonusManager.markClaimed(uuid, def.getType());
+
+        player.sendMessage(ChatColor.LIGHT_PURPLE + "[Daily Bonus] " + ChatColor.GREEN
+                + "First " + formatItem(def.getType()) + " commission today! +"
+                + goldBonus + " Gold Coins"
+                + (xpBonus > 0 ? ", +" + xpBonus + " XP" : ""));
     }
 }

@@ -56,6 +56,12 @@ farming:
       y: 256
       z: 100
 
+# Bonus Gold Coins and skill XP for the first completion of each commission type per day.
+# Resets at midnight UTC. Each distinct type (MINING_COAL, WOODCUTTING, etc.) has its own bonus.
+daily-commission-bonus:
+  gold-bonus: 50
+  xp-bonus: 50
+
 commission-board:
   block-type: OAK_WALL_SIGN
   locations:

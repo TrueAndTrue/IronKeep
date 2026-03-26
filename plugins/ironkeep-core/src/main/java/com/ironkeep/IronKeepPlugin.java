@@ -3,6 +3,12 @@ package com.ironkeep;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.plugin.lifecycle.event.LifecycleEventManager;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
+import org.bukkit.GameRule;
+import org.bukkit.World;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -18,6 +24,10 @@ public class IronKeepPlugin extends JavaPlugin {
     private EscapeManager escapeManager;
     private DailyQuestManager dailyQuestManager;
     private ZoneManager zoneManager;
+    private MailRoomManager mailRoomManager;
+    private KitchenManager kitchenManager;
+    private SkillManager skillManager;
+    private DailyBonusManager dailyBonusManager;
 
     @SuppressWarnings("UnstableApiUsage")
     @Override
@@ -33,11 +43,23 @@ public class IronKeepPlugin extends JavaPlugin {
         escapeManager = new EscapeManager(this);
         escapeManager.load();
 
+        skillManager = new SkillManager(this);
+        skillManager.load();
+
+        dailyBonusManager = new DailyBonusManager(this);
+        dailyBonusManager.load();
+
         dailyQuestManager = new DailyQuestManager(this);
         dailyQuestManager.load();
 
         zoneManager = new ZoneManager(this);
         zoneManager.load();
+
+        mailRoomManager = new MailRoomManager(this);
+        mailRoomManager.load();
+
+        kitchenManager = new KitchenManager(this);
+        kitchenManager.load();
 
         BlockRegenManager blockRegenManager = new BlockRegenManager(this);
         blockRegenManager.load();
@@ -52,6 +74,10 @@ public class IronKeepPlugin extends JavaPlugin {
         commissionManager = new CommissionManager(commissionRegistry, stateStore, currencyManager);
         commissionManager.setRankManager(rankManager);
         commissionManager.setEscapeManager(escapeManager);
+        commissionManager.setMailRoomManager(mailRoomManager);
+        commissionManager.setKitchenManager(kitchenManager);
+        commissionManager.setSkillManager(skillManager);
+        commissionManager.setDailyBonusManager(dailyBonusManager);
 
         commissionBoardManager = new CommissionBoardManager(this);
         commissionBoardManager.load();
@@ -67,6 +93,8 @@ public class IronKeepPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new WoodcuttingListener(this), this);
         getServer().getPluginManager().registerEvents(new MiningListener(this), this);
         getServer().getPluginManager().registerEvents(new FarmingListener(this), this);
+        getServer().getPluginManager().registerEvents(new MailSortingListener(this), this);
+        getServer().getPluginManager().registerEvents(new KitchenListener(this), this);
 
         wardenManager = new WardenManager(this);
         getServer().getPluginManager().registerEvents(new WardenListener(this, wardenManager), this);
@@ -82,11 +110,36 @@ public class IronKeepPlugin extends JavaPlugin {
             new RankUpCommand(this).register(commands);
             new RankCommand(this).register(commands);
             new EscapeCommand(this).register(commands);
+            new MailRoomCommand(this).register(commands);
+            new KitchenCommand(this).register(commands);
+            new SkillCommand(this).register(commands);
             DailyQuestListener dql = new DailyQuestListener(this);
             getServer().getPluginManager().registerEvents(dql, this);
             dql.register(commands);
             new RemoveTargetCommand().register(commands);
         });
+
+        // Enable daylight cycle, lock weather to clear
+        getServer().getScheduler().runTaskLater(this, () -> {
+            for (World world : getServer().getWorlds()) {
+                @SuppressWarnings("removal")
+                boolean unusedTime = world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
+                @SuppressWarnings("removal")
+                boolean unusedWeather = world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+                world.setStorm(false);
+                world.setThundering(false);
+            }
+        }, 1L);
+
+        // Clock action bar — update every 20 ticks (1 second) to stay visible
+        getServer().getScheduler().runTaskTimer(this, () -> {
+            World world = getServer().getWorlds().isEmpty() ? null : getServer().getWorlds().get(0);
+            if (world == null) return;
+            Component clockText = buildClockText(world.getTime());
+            for (Player player : getServer().getOnlinePlayers()) {
+                player.sendActionBar(clockText);
+            }
+        }, 20L, 20L);
 
         getLogger().info("IronKeep enabled.");
     }
@@ -126,5 +179,50 @@ public class IronKeepPlugin extends JavaPlugin {
 
     public ZoneManager getZoneManager() {
         return zoneManager;
+    }
+
+    public MailRoomManager getMailRoomManager() {
+        return mailRoomManager;
+    }
+
+    public KitchenManager getKitchenManager() {
+        return kitchenManager;
+    }
+
+    public SkillManager getSkillManager() {
+        return skillManager;
+    }
+
+    public DailyBonusManager getDailyBonusManager() {
+        return dailyBonusManager;
+    }
+
+    /**
+     * Converts Minecraft world ticks to a 12-hour clock string, rounded to the nearest
+     * 30-minute interval. Tick 0 = 6:00 AM, 6000 = 12:00 PM, 18000 = 12:00 AM.
+     */
+    private Component buildClockText(long ticks) {
+        // Convert ticks to total minutes past midnight (tick 0 = 6:00 AM)
+        int totalMinutes = (int) ((ticks / 1000.0 * 60 + 360) % 1440);
+
+        // Round to nearest 30 minutes
+        int rounded = ((totalMinutes + 15) / 30) * 30;
+        if (rounded >= 1440) rounded = 0;
+
+        int hour24 = rounded / 60;
+        int minute = rounded % 60;
+
+        // 12-hour format
+        String period = hour24 < 12 ? "AM" : "PM";
+        int hour12 = hour24 % 12;
+        if (hour12 == 0) hour12 = 12;
+        String time = String.format("%d:%02d %s", hour12, minute, period);
+
+        // Day (6 AM - 6 PM) = gold sun, Night = gray moon
+        boolean isDay = hour24 >= 6 && hour24 < 18;
+        String icon = isDay ? "\u2600" : "\u263E"; // ☀ or ☾
+        TextColor color = isDay ? NamedTextColor.GOLD : NamedTextColor.GRAY;
+
+        return Component.text(icon + " " + time, color);
     }
 }

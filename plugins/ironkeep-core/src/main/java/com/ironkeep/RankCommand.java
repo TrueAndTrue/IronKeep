@@ -58,7 +58,6 @@ public class RankCommand implements BasicCommand {
     }
 
     private String format(double amount) {
-        if (amount == Math.floor(amount)) return String.format("%,d", (long) amount);
-        return String.format("%,.2f", amount);
+        return String.format("%,d", Math.round(amount));
     }
 }

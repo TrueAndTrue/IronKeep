@@ -1,0 +1,110 @@
+# IronKeep Mail Room Configuration
+# Controls the Mail Sorting commission type.
+
+# Accuracy bonus: extra Gold Coins and Shards awarded based on delivery accuracy.
+# Full bonus is granted at 100% accuracy; scales linearly down to 0% at 0% accuracy.
+accuracy-bonus:
+  max-gold-coins: 40.0
+  max-shards: 40.0
+
+# Difficulty per rank: how many mail items to sort and which destinations are active.
+difficulty:
+  rank1:
+    mail-count: 4
+    destinations:
+      - Armory
+      - Kitchen
+      - Warden Office
+      - Infirmary
+
+  rank2:
+    mail-count: 6
+    destinations:
+      - Armory
+      - Kitchen
+      - Warden Office
+      - Infirmary
+      - Guard Barracks
+      - Storage
+
+  rank3:
+    mail-count: 8
+    destinations:
+      - Armory
+      - Kitchen
+      - Warden Office
+      - Infirmary
+      - Guard Barracks
+      - Storage
+      - Medical Bay
+      - Records Room
+
+  rank4:
+    mail-count: 10
+    destinations:
+      - Armory
+      - Kitchen
+      - Warden Office
+      - Infirmary
+      - Guard Barracks
+      - Storage
+      - Medical Bay
+      - Records Room
+      - Chapel
+      - Workshop
+
+# Barrel locations: one BARREL block per destination.
+# Placed along Z:-24 (south row) and Z:-35 (north row) inside the mail_room zone.
+barrels:
+  - destination: Armory
+    world: world
+    x: 101
+    y: 3
+    z: -24
+  - destination: Kitchen
+    world: world
+    x: 103
+    y: 3
+    z: -24
+  - destination: Warden Office
+    world: world
+    x: 105
+    y: 3
+    z: -24
+  - destination: Infirmary
+    world: world
+    x: 107
+    y: 3
+    z: -24
+  - destination: Guard Barracks
+    world: world
+    x: 109
+    y: 3
+    z: -24
+  - destination: Storage
+    world: world
+    x: 101
+    y: 3
+    z: -35
+  - destination: Medical Bay
+    world: world
+    x: 103
+    y: 3
+    z: -35
+  - destination: Records Room
+    world: world
+    x: 105
+    y: 3
+    z: -35
+  - destination: Chapel
+    world: world
+    x: 107
+    y: 3
+    z: -35
+    facing: SOUTH
+  - destination: Workshop
+    world: world
+    x: 109
+    y: 3
+    z: -35
+    facing: SOUTH
