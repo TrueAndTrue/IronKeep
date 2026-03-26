@@ -18,11 +18,15 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public class KitchenListener implements Listener {
 
     private final IronKeepPlugin plugin;
+    // Tracks players who have physically entered the kitchen zone
+    private final Set<UUID> enteredZone = new HashSet<>();
 
     public KitchenListener(IronKeepPlugin plugin) {
         this.plugin = plugin;
@@ -118,13 +122,18 @@ public class KitchenListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
+        enteredZone.remove(player.getUniqueId());
         CommissionDefinition activeDef = plugin.getCommissionManager().getActiveCommission(player);
         if (activeDef != null && activeDef.getType().equalsIgnoreCase("COOKING")) {
             plugin.getKitchenManager().clearCooking(player);
         }
     }
 
-    /** Cancel commission and clear cooking state when player leaves the kitchen zone. */
+    /**
+     * Zone tracking: activate on entry, cancel on exit.
+     * Commission is only cancelled after the player has entered the kitchen zone,
+     * preventing cancellation when walking away from the Commission Board after accepting.
+     */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerMove(PlayerMoveEvent event) {
         if (event.getFrom().getBlockX() == event.getTo().getBlockX()
@@ -134,13 +143,21 @@ public class KitchenListener implements Listener {
         }
 
         Player player = event.getPlayer();
+        UUID uuid = player.getUniqueId();
         CommissionManager commissionManager = plugin.getCommissionManager();
         CommissionDefinition activeDef = commissionManager.getActiveCommission(player);
-        if (activeDef == null || !activeDef.getType().equalsIgnoreCase("COOKING")) return;
+        if (activeDef == null || !activeDef.getType().equalsIgnoreCase("COOKING")) {
+            enteredZone.remove(uuid);
+            return;
+        }
 
         ZoneManager zoneManager = plugin.getZoneManager();
-        if (!zoneManager.isInValidZone(event.getTo(), "COOKING")) {
-            UUID uuid = player.getUniqueId();
+        boolean inZone = zoneManager.isInValidZone(event.getTo(), "COOKING");
+
+        if (inZone) {
+            enteredZone.add(uuid);
+        } else if (enteredZone.contains(uuid)) {
+            enteredZone.remove(uuid);
             plugin.getKitchenManager().clearCooking(player);
             commissionManager.cancelCommission(uuid);
             player.sendMessage(ChatColor.RED + "You left the Kitchen — your commission has been cancelled.");

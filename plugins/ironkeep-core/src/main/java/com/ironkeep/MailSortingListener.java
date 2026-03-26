@@ -14,11 +14,16 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public class MailSortingListener implements Listener {
 
     private final IronKeepPlugin plugin;
+    // Tracks players who have physically entered the mail room zone
+    // Zone-exit cancellation only fires AFTER the player has entered
+    private final Set<UUID> enteredZone = new HashSet<>();
 
     public MailSortingListener(IronKeepPlugin plugin) {
         this.plugin = plugin;
@@ -93,13 +98,18 @@ public class MailSortingListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
+        enteredZone.remove(player.getUniqueId());
         CommissionDefinition activeDef = plugin.getCommissionManager().getActiveCommission(player);
         if (activeDef != null && activeDef.getType().equalsIgnoreCase("MAIL_SORTING")) {
             plugin.getMailRoomManager().clearMail(player);
         }
     }
 
-    /** Cancel commission and clear mail when player leaves the mail room zone. */
+    /**
+     * Zone tracking: activate on entry, cancel on exit.
+     * The commission is only cancelled if the player has previously entered the mail room zone.
+     * This prevents cancellation when the player walks away from the Commission Board after accepting.
+     */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerMove(PlayerMoveEvent event) {
         // Only trigger when the player crosses a block boundary
@@ -110,16 +120,27 @@ public class MailSortingListener implements Listener {
         }
 
         Player player = event.getPlayer();
+        UUID uuid = player.getUniqueId();
         CommissionManager commissionManager = plugin.getCommissionManager();
         CommissionDefinition activeDef = commissionManager.getActiveCommission(player);
-        if (activeDef == null || !activeDef.getType().equalsIgnoreCase("MAIL_SORTING")) return;
+        if (activeDef == null || !activeDef.getType().equalsIgnoreCase("MAIL_SORTING")) {
+            enteredZone.remove(uuid);
+            return;
+        }
 
         ZoneManager zoneManager = plugin.getZoneManager();
-        if (!zoneManager.isInValidZone(event.getTo(), "MAIL_SORTING")) {
-            UUID uuid = player.getUniqueId();
+        boolean inZone = zoneManager.isInValidZone(event.getTo(), "MAIL_SORTING");
+
+        if (inZone) {
+            // Mark that the player has entered the zone
+            enteredZone.add(uuid);
+        } else if (enteredZone.contains(uuid)) {
+            // Player has left the zone after having entered it — cancel commission
+            enteredZone.remove(uuid);
             plugin.getMailRoomManager().clearMail(player);
             commissionManager.cancelCommission(uuid);
             player.sendMessage(ChatColor.RED + "You left the Mail Room — your commission has been cancelled.");
         }
+        // If player never entered the zone, leaving has no effect
     }
 }
