@@ -20,6 +20,7 @@ public class IronKeepPlugin extends JavaPlugin {
     private ZoneManager zoneManager;
     private MailRoomManager mailRoomManager;
     private KitchenManager kitchenManager;
+    private SkillManager skillManager;
 
     @SuppressWarnings("UnstableApiUsage")
     @Override
@@ -34,6 +35,9 @@ public class IronKeepPlugin extends JavaPlugin {
 
         escapeManager = new EscapeManager(this);
         escapeManager.load();
+
+        skillManager = new SkillManager(this);
+        skillManager.load();
 
         dailyQuestManager = new DailyQuestManager(this);
         dailyQuestManager.load();
@@ -62,6 +66,7 @@ public class IronKeepPlugin extends JavaPlugin {
         commissionManager.setEscapeManager(escapeManager);
         commissionManager.setMailRoomManager(mailRoomManager);
         commissionManager.setKitchenManager(kitchenManager);
+        commissionManager.setSkillManager(skillManager);
 
         commissionBoardManager = new CommissionBoardManager(this);
         commissionBoardManager.load();
@@ -96,6 +101,7 @@ public class IronKeepPlugin extends JavaPlugin {
             new EscapeCommand(this).register(commands);
             new MailRoomCommand(this).register(commands);
             new KitchenCommand(this).register(commands);
+            new SkillCommand(this).register(commands);
             DailyQuestListener dql = new DailyQuestListener(this);
             getServer().getPluginManager().registerEvents(dql, this);
             dql.register(commands);
@@ -148,5 +154,9 @@ public class IronKeepPlugin extends JavaPlugin {
 
     public KitchenManager getKitchenManager() {
         return kitchenManager;
+    }
+
+    public SkillManager getSkillManager() {
+        return skillManager;
     }
 }

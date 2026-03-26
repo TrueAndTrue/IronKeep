@@ -1,0 +1,23 @@
+# Commission Skill Tree Configuration
+level-cap: 50
+
+# XP granted per commission type on completion
+xp-per-completion:
+  MINING: 100
+  WOODCUTTING: 120
+  FARMING: 90
+  MAIL_SORTING: 110
+  COOKING: 130
+
+# XP curve formula: xp_required = base * level^1.5
+# e.g. level 1->2: 200 XP, level 5->6: ~2236 XP
+xp-curve-base: 200.0
+
+# Gold Coin bonus per level (percentage, additive)
+gold-bonus-per-level: 2.0
+
+# Shard bonus per level (percentage, additive)
+shard-bonus-per-level: 1.0
+
+# Objective reduction: every N levels, required quantity -1 (min 1)
+objective-reduction-every-levels: 10
