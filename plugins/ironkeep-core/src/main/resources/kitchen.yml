@@ -114,40 +114,40 @@ ingredient-frames:
   - ingredient: CARROT
     world: world
     x: 128
-    y: 5
-    z: -18
+    y: 4
+    z: -5
   - ingredient: POTATO
     world: world
     x: 130
-    y: 5
-    z: -18
+    y: 4
+    z: -5
   - ingredient: BOWL
     world: world
     x: 132
-    y: 5
-    z: -18
+    y: 4
+    z: -5
   - ingredient: BEEF
     world: world
     x: 134
-    y: 5
-    z: -18
+    y: 4
+    z: -5
   - ingredient: PORKCHOP
     world: world
     x: 136
-    y: 5
-    z: -18
+    y: 4
+    z: -5
   - ingredient: WHEAT
     world: world
     x: 138
-    y: 5
-    z: -18
+    y: 4
+    z: -5
   - ingredient: EGG
     world: world
     x: 140
-    y: 5
-    z: -18
+    y: 4
+    z: -5
   - ingredient: CHICKEN
     world: world
     x: 142
-    y: 5
-    z: -18
+    y: 4
+    z: -5

@@ -43,6 +43,8 @@ public class MailRoomManager {
 
     // Barrel location string ("world,x,y,z") → destination label
     private final Map<String, String> barrelDestinations = new HashMap<>();
+    // Barrel location string ("world,x,y,z") → facing direction (e.g. "NORTH", "SOUTH")
+    private final Map<String, String> barrelFacings = new HashMap<>();
 
     public MailRoomManager(IronKeepPlugin plugin) {
         this.plugin = plugin;
@@ -53,6 +55,7 @@ public class MailRoomManager {
         mailCounts.clear();
         rankDestinations.clear();
         barrelDestinations.clear();
+        barrelFacings.clear();
 
         File file = new File(plugin.getDataFolder(), "mail-room.yml");
         if (!file.exists()) plugin.saveResource("mail-room.yml", false);
@@ -94,6 +97,9 @@ public class MailRoomManager {
                 int z = toInt(map.get("z"));
                 String key = barrelKey(world, x, y, z);
                 barrelDestinations.put(key, destination);
+                if (map.containsKey("facing")) {
+                    barrelFacings.put(key, String.valueOf(map.get("facing")).toUpperCase());
+                }
             }
         }
 
@@ -278,7 +284,18 @@ public class MailRoomManager {
                 int x = Integer.parseInt(parts[1]);
                 int y = Integer.parseInt(parts[2]);
                 int z = Integer.parseInt(parts[3]);
-                world.getBlockAt(x, y, z).setType(Material.BARREL);
+                org.bukkit.block.Block barrelBlock = world.getBlockAt(x, y, z);
+                barrelBlock.setType(Material.BARREL);
+                // Apply facing if configured
+                String facingStr = barrelFacings.get(entry.getKey());
+                if (facingStr != null) {
+                    try {
+                        org.bukkit.block.data.type.Barrel barrelData =
+                                (org.bukkit.block.data.type.Barrel) barrelBlock.getBlockData();
+                        barrelData.setFacing(org.bukkit.block.BlockFace.valueOf(facingStr));
+                        barrelBlock.setBlockData(barrelData);
+                    } catch (Exception ignored) {}
+                }
                 placed++;
             } catch (NumberFormatException ignored) {}
         }

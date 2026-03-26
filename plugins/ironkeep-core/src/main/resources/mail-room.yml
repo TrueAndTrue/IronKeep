@@ -101,8 +101,10 @@ barrels:
     x: 107
     y: 3
     z: -35
+    facing: SOUTH
   - destination: Workshop
     world: world
     x: 109
     y: 3
     z: -35
+    facing: SOUTH

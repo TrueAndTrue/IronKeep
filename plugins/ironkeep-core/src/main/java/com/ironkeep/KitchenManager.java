@@ -470,7 +470,16 @@ public class KitchenManager {
                         .filter(e -> e instanceof ItemFrame)
                         .forEach(e -> e.remove());
                 ItemFrame frame = (ItemFrame) world.spawnEntity(loc, EntityType.ITEM_FRAME);
-                frame.setItem(new ItemStack(entry.getValue()));
+                frame.setFixed(true);
+                frame.setVisible(false); // invisible frame, item still shows
+                // Give the item a readable display name
+                ItemStack frameItem = new ItemStack(entry.getValue());
+                org.bukkit.inventory.meta.ItemMeta frameMeta = frameItem.getItemMeta();
+                if (frameMeta != null) {
+                    frameMeta.setDisplayName(org.bukkit.ChatColor.YELLOW + formatMaterial(entry.getValue()));
+                    frameItem.setItemMeta(frameMeta);
+                }
+                frame.setItem(frameItem);
                 placed++;
             } catch (NumberFormatException ignored) {}
         }

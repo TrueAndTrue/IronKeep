@@ -209,7 +209,11 @@ public class CommissionManager {
             stateStore.clearState(uuid);
             return;
         }
-        // COOKING has its own completion logic (GUI-based confirmation)
+        // MAIL_SORTING and COOKING have their own completion logic — skip the standard progress check
+        if (def.getType().equalsIgnoreCase("MAIL_SORTING")) {
+            completeMailSorting(player, uuid, def, state);
+            return;
+        }
         if (def.getType().equalsIgnoreCase("COOKING")) {
             completeCooking(player, uuid, def, state);
             return;
@@ -220,12 +224,6 @@ public class CommissionManager {
             player.sendMessage(PREFIX + ChatColor.RED + "Commission not yet complete. Progress: "
                     + ChatColor.YELLOW + state.getProgress() + "/" + def.getObjectiveQuantity()
                     + ChatColor.RED + " (" + remaining + " remaining).");
-            return;
-        }
-
-        // MAIL_SORTING has its own completion logic — no inventory item check
-        if (def.getType().equalsIgnoreCase("MAIL_SORTING")) {
-            completeMailSorting(player, uuid, def, state);
             return;
         }
 
