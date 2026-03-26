@@ -17,6 +17,7 @@ ranks:
     unlocked-types:
       - MINING_COAL   # Coal mining commissions only
       - MAIL_SORTING  # Mail sorting commission
+      - COOKING       # Kitchen cooking commission
 
   rank2:
     rank: 2

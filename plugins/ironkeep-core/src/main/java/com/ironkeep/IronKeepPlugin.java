@@ -19,6 +19,7 @@ public class IronKeepPlugin extends JavaPlugin {
     private DailyQuestManager dailyQuestManager;
     private ZoneManager zoneManager;
     private MailRoomManager mailRoomManager;
+    private KitchenManager kitchenManager;
 
     @SuppressWarnings("UnstableApiUsage")
     @Override
@@ -43,6 +44,9 @@ public class IronKeepPlugin extends JavaPlugin {
         mailRoomManager = new MailRoomManager(this);
         mailRoomManager.load();
 
+        kitchenManager = new KitchenManager(this);
+        kitchenManager.load();
+
         BlockRegenManager blockRegenManager = new BlockRegenManager(this);
         blockRegenManager.load();
         getServer().getPluginManager().registerEvents(blockRegenManager, this);
@@ -57,6 +61,7 @@ public class IronKeepPlugin extends JavaPlugin {
         commissionManager.setRankManager(rankManager);
         commissionManager.setEscapeManager(escapeManager);
         commissionManager.setMailRoomManager(mailRoomManager);
+        commissionManager.setKitchenManager(kitchenManager);
 
         commissionBoardManager = new CommissionBoardManager(this);
         commissionBoardManager.load();
@@ -73,6 +78,7 @@ public class IronKeepPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MiningListener(this), this);
         getServer().getPluginManager().registerEvents(new FarmingListener(this), this);
         getServer().getPluginManager().registerEvents(new MailSortingListener(this), this);
+        getServer().getPluginManager().registerEvents(new KitchenListener(this), this);
 
         wardenManager = new WardenManager(this);
         getServer().getPluginManager().registerEvents(new WardenListener(this, wardenManager), this);
@@ -89,6 +95,7 @@ public class IronKeepPlugin extends JavaPlugin {
             new RankCommand(this).register(commands);
             new EscapeCommand(this).register(commands);
             new MailRoomCommand(this).register(commands);
+            new KitchenCommand(this).register(commands);
             DailyQuestListener dql = new DailyQuestListener(this);
             getServer().getPluginManager().registerEvents(dql, this);
             dql.register(commands);
@@ -137,5 +144,9 @@ public class IronKeepPlugin extends JavaPlugin {
 
     public MailRoomManager getMailRoomManager() {
         return mailRoomManager;
+    }
+
+    public KitchenManager getKitchenManager() {
+        return kitchenManager;
     }
 }

@@ -17,6 +17,7 @@ public class CommissionManager {
     private RankManager rankManager;         // set after construction to avoid circular dependency
     private EscapeManager escapeManager;     // set after construction
     private MailRoomManager mailRoomManager; // set after construction
+    private KitchenManager kitchenManager;   // set after construction
 
     public CommissionManager(CommissionRegistry registry, CommissionStateStore stateStore,
                              CurrencyManager currencyManager) {
@@ -35,6 +36,10 @@ public class CommissionManager {
 
     public void setMailRoomManager(MailRoomManager mailRoomManager) {
         this.mailRoomManager = mailRoomManager;
+    }
+
+    public void setKitchenManager(KitchenManager kitchenManager) {
+        this.kitchenManager = kitchenManager;
     }
 
     public void assignCommission(Player player, String commissionId) {
@@ -65,6 +70,10 @@ public class CommissionManager {
             int rankNum = rankManager != null ? rankManager.getPlayerRank(uuid) : 1;
             mailRoomManager.assignMail(player, rankNum);
         }
+        if (def.getType().equalsIgnoreCase("COOKING") && kitchenManager != null) {
+            int rankNum = rankManager != null ? rankManager.getPlayerRank(uuid) : 1;
+            kitchenManager.assignRecipe(player, rankNum);
+        }
     }
 
     /** Cancels a player's active commission without reward. */
@@ -77,6 +86,16 @@ public class CommissionManager {
                 if (def != null && def.getType().equalsIgnoreCase("MAIL_SORTING")) {
                     org.bukkit.entity.Player player = org.bukkit.Bukkit.getPlayer(uuid);
                     if (player != null) mailRoomManager.clearMail(player);
+                }
+            }
+        }
+        if (kitchenManager != null) {
+            PlayerCommissionState cs = stateStore.getState(uuid);
+            if (cs != null && cs.getActiveCommissionId() != null) {
+                CommissionDefinition def = registry.getById(cs.getActiveCommissionId());
+                if (def != null && def.getType().equalsIgnoreCase("COOKING")) {
+                    org.bukkit.entity.Player player = org.bukkit.Bukkit.getPlayer(uuid);
+                    if (player != null) kitchenManager.clearCooking(player);
                 }
             }
         }
@@ -114,6 +133,10 @@ public class CommissionManager {
         if (def.getType().equalsIgnoreCase("MAIL_SORTING") && mailRoomManager != null) {
             int rankNum = rankManager != null ? rankManager.getPlayerRank(uuid) : 1;
             mailRoomManager.assignMail(player, rankNum);
+        }
+        if (def.getType().equalsIgnoreCase("COOKING") && kitchenManager != null) {
+            int rankNum = rankManager != null ? rankManager.getPlayerRank(uuid) : 1;
+            kitchenManager.assignRecipe(player, rankNum);
         }
     }
 
@@ -186,6 +209,12 @@ public class CommissionManager {
             stateStore.clearState(uuid);
             return;
         }
+        // COOKING has its own completion logic (GUI-based confirmation)
+        if (def.getType().equalsIgnoreCase("COOKING")) {
+            completeCooking(player, uuid, def, state);
+            return;
+        }
+
         if (state.getProgress() < def.getObjectiveQuantity()) {
             int remaining = def.getObjectiveQuantity() - state.getProgress();
             player.sendMessage(PREFIX + ChatColor.RED + "Commission not yet complete. Progress: "
@@ -296,6 +325,90 @@ public class CommissionManager {
         player.sendMessage(ChatColor.GOLD + "  Total earned: " + ChatColor.YELLOW
                 + formatNumber(totalGold) + " Gold Coins"
                 + (totalShards > 0 ? ChatColor.GOLD + " + " + ChatColor.AQUA + formatNumber(totalShards) + " Shards" : ""));
+        player.sendMessage(ChatColor.GOLD + "  Gold Coins: " + ChatColor.YELLOW
+                + formatNumber(currencyManager.getBalance(uuid)));
+        if (totalShards > 0) {
+            player.sendMessage(ChatColor.AQUA + "  Shards:     " + ChatColor.WHITE
+                    + formatNumber(currencyManager.getShards(uuid)));
+        }
+    }
+
+    private void completeCooking(Player player, UUID uuid, CommissionDefinition def,
+                                 PlayerCommissionState state) {
+        CookingState cookingState = kitchenManager != null ? kitchenManager.getState(uuid) : null;
+        if (cookingState == null || !cookingState.isReadyToTurnIn()) {
+            player.sendMessage(PREFIX + ChatColor.RED
+                    + "Complete your dish in the Kitchen first! Use the cauldron to confirm your ingredients.");
+            return;
+        }
+
+        CookingRecipe recipe = kitchenManager.getRecipe(cookingState.getRecipeId());
+        if (recipe == null) {
+            player.sendMessage(PREFIX + ChatColor.RED
+                    + "Recipe not found. Commission cancelled.");
+            if (kitchenManager != null) kitchenManager.clearCooking(player);
+            stateStore.clearState(uuid);
+            return;
+        }
+
+        // Calculate accuracy: positions that match the expected order
+        java.util.List<Material> confirmed = cookingState.getConfirmedIngredients();
+        java.util.List<Material> expected = recipe.getIngredients();
+        int n = expected.size();
+        int correct = 0;
+        if (confirmed != null) {
+            for (int i = 0; i < Math.min(confirmed.size(), n); i++) {
+                if (confirmed.get(i) == expected.get(i)) correct++;
+            }
+        }
+        double accuracy = n > 0 ? (correct * 100.0 / n) : 0.0;
+
+        double maxGoldBonus = kitchenManager.getMaxGoldBonus();
+        double maxShardsBonus = kitchenManager.getMaxShardsBonus();
+        double goldBonus = maxGoldBonus * (accuracy / 100.0);
+        double shardsBonus = maxShardsBonus * (accuracy / 100.0);
+
+        double baseGold = def.getRewardAmount();
+        if (escapeManager != null) {
+            baseGold = escapeManager.applyBonus(uuid, baseGold);
+        }
+        double totalGold = baseGold + goldBonus;
+        double totalShards = def.getShardsReward() + shardsBonus;
+
+        currencyManager.addBalance(uuid, totalGold);
+        if (totalShards > 0) {
+            currencyManager.addShards(uuid, totalShards);
+        }
+
+        kitchenManager.clearCooking(player);
+        stateStore.clearState(uuid);
+
+        String escapePart = "";
+        if (escapeManager != null && escapeManager.getEscapeLevel(uuid) > 0) {
+            int bonusPct = (int) ((escapeManager.getGoldCoinMultiplier(uuid) - 1.0) * 100);
+            escapePart = ChatColor.GRAY + " (+" + bonusPct + "% escape bonus)";
+        }
+
+        player.sendMessage(PREFIX + ChatColor.GREEN + "Commission complete!");
+        player.sendMessage(ChatColor.GOLD + "  Accuracy: " + ChatColor.YELLOW
+                + String.format("%.0f%%", accuracy)
+                + ChatColor.GRAY + " (" + correct + "/" + n + " correct)");
+        player.sendMessage(ChatColor.GOLD + "  Base reward:  " + ChatColor.YELLOW
+                + formatNumber(baseGold) + " Gold Coins"
+                + (def.getShardsReward() > 0
+                        ? ChatColor.GOLD + " + " + ChatColor.AQUA + formatNumber(def.getShardsReward()) + " Shards"
+                        : "")
+                + escapePart);
+        player.sendMessage(ChatColor.GOLD + "  Accuracy bonus: " + ChatColor.YELLOW
+                + formatNumber(goldBonus) + " Gold Coins"
+                + (shardsBonus > 0
+                        ? ChatColor.GOLD + " + " + ChatColor.AQUA + formatNumber(shardsBonus) + " Shards"
+                        : ""));
+        player.sendMessage(ChatColor.GOLD + "  Total earned: " + ChatColor.YELLOW
+                + formatNumber(totalGold) + " Gold Coins"
+                + (totalShards > 0
+                        ? ChatColor.GOLD + " + " + ChatColor.AQUA + formatNumber(totalShards) + " Shards"
+                        : ""));
         player.sendMessage(ChatColor.GOLD + "  Gold Coins: " + ChatColor.YELLOW
                 + formatNumber(currencyManager.getBalance(uuid)));
         if (totalShards > 0) {

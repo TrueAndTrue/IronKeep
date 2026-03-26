@@ -71,3 +71,14 @@ zones:
     y-max: 12
     commission-types:
       - MAIL_SORTING
+
+  kitchen:
+    world: world
+    x1: 127
+    z1: -20
+    x2: 145
+    z2: -2
+    y-min: 2
+    y-max: 10
+    commission-types:
+      - COOKING

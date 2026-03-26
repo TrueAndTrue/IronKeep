@@ -38,6 +38,17 @@ commissions:
     reward-amount: 60.0
     shards-reward: 60.0
 
+  # --- Cooking — Rank 1 ---
+
+  cooking_r1:
+    type: COOKING
+    display-name: "Kitchen Duty"
+    description: "Prepare a dish in the Keep's Kitchen"
+    objective-item: CAULDRON
+    objective-quantity: 1
+    reward-amount: 80.0
+    shards-reward: 80.0
+
   # --- Woodcutting — Rank 2 ---
 
   woodcutting_oak:

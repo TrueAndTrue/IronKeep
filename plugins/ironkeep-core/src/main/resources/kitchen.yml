@@ -1,0 +1,153 @@
+# IronKeep Kitchen Configuration
+# Configures the Cooking commission type.
+
+accuracy-bonus:
+  max-gold-coins: 60.0
+  max-shards: 60.0
+
+# Location of the cooking cauldron
+cauldron:
+  world: world
+  x: 135
+  y: 3
+  z: -11
+
+# Recipes used for Cooking commissions
+# rank-tier: recipes available at this rank and above (cumulative)
+# ingredients: ordered list of Material names — order matters for accuracy bonus
+recipes:
+
+  prisoners_soup:
+    display-name: "Prisoner's Soup"
+    rank-tier: 1
+    ingredients:
+      - CARROT
+      - POTATO
+      - BOWL
+
+  guards_stew:
+    display-name: "Guard's Stew"
+    rank-tier: 1
+    ingredients:
+      - BEEF
+      - CARROT
+      - BOWL
+
+  simple_salad:
+    display-name: "Simple Salad"
+    rank-tier: 1
+    ingredients:
+      - WHEAT_SEEDS
+      - CARROT
+      - BOWL
+
+  bread_loaf:
+    display-name: "Bread Loaf"
+    rank-tier: 2
+    ingredients:
+      - WHEAT
+      - WHEAT
+      - EGG
+
+  roast_dinner:
+    display-name: "Roast Dinner"
+    rank-tier: 2
+    ingredients:
+      - PORKCHOP
+      - POTATO
+      - CARROT
+      - BOWL
+
+  wardens_feast:
+    display-name: "Warden's Feast"
+    rank-tier: 3
+    ingredients:
+      - BEEF
+      - POTATO
+      - CARROT
+      - EGG
+      - BOWL
+
+  spiced_broth:
+    display-name: "Spiced Broth"
+    rank-tier: 3
+    ingredients:
+      - CHICKEN
+      - CARROT
+      - POTATO
+      - SUGAR
+      - BOWL
+
+  prison_pie:
+    display-name: "Prison Pie"
+    rank-tier: 4
+    ingredients:
+      - WHEAT
+      - SUGAR
+      - EGG
+      - APPLE
+      - POTATO
+
+  victory_cake:
+    display-name: "Victory Cake"
+    rank-tier: 4
+    ingredients:
+      - WHEAT
+      - SUGAR
+      - EGG
+      - COCOA_BEANS
+      - MILK_BUCKET
+
+  mystery_stew:
+    display-name: "Mystery Stew"
+    rank-tier: 4
+    ingredients:
+      - MUSHROOM_STEW
+      - CARROT
+      - POTATO
+      - BEEF
+      - EGG
+
+# Item frames placed in the Kitchen that provide cooking ingredients.
+# Run /kitchen setup to place them in the world.
+ingredient-frames:
+  - ingredient: CARROT
+    world: world
+    x: 128
+    y: 5
+    z: -18
+  - ingredient: POTATO
+    world: world
+    x: 130
+    y: 5
+    z: -18
+  - ingredient: BOWL
+    world: world
+    x: 132
+    y: 5
+    z: -18
+  - ingredient: BEEF
+    world: world
+    x: 134
+    y: 5
+    z: -18
+  - ingredient: PORKCHOP
+    world: world
+    x: 136
+    y: 5
+    z: -18
+  - ingredient: WHEAT
+    world: world
+    x: 138
+    y: 5
+    z: -18
+  - ingredient: EGG
+    world: world
+    x: 140
+    y: 5
+    z: -18
+  - ingredient: CHICKEN
+    world: world
+    x: 142
+    y: 5
+    z: -18
