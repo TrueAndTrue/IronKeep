@@ -27,6 +27,17 @@ commissions:
     reward-amount: 40.0
     shards-reward: 40.0
 
+  # --- Mail Sorting — Rank 1 ---
+
+  mail_sorting_r1:
+    type: MAIL_SORTING
+    display-name: "Mail Sorting"
+    description: "Sort mail in the Warden's Mail Room"
+    objective-item: PAPER
+    objective-quantity: 4
+    reward-amount: 60.0
+    shards-reward: 60.0
+
   # --- Woodcutting — Rank 2 ---
 
   woodcutting_oak:

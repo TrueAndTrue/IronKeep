@@ -60,3 +60,14 @@ zones:
     y-max: 72
     commission-types:
       - FARMING
+
+  mail_room:
+    world: world
+    x1: 100
+    z1: -36
+    x2: 109
+    z2: -23
+    y-min: 2
+    y-max: 12
+    commission-types:
+      - MAIL_SORTING

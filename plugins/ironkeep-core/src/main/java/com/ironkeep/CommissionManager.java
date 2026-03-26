@@ -14,8 +14,9 @@ public class CommissionManager {
     private final CommissionRegistry registry;
     private final CommissionStateStore stateStore;
     private final CurrencyManager currencyManager;
-    private RankManager rankManager;     // set after construction to avoid circular dependency
-    private EscapeManager escapeManager; // set after construction
+    private RankManager rankManager;         // set after construction to avoid circular dependency
+    private EscapeManager escapeManager;     // set after construction
+    private MailRoomManager mailRoomManager; // set after construction
 
     public CommissionManager(CommissionRegistry registry, CommissionStateStore stateStore,
                              CurrencyManager currencyManager) {
@@ -30,6 +31,10 @@ public class CommissionManager {
 
     public void setEscapeManager(EscapeManager escapeManager) {
         this.escapeManager = escapeManager;
+    }
+
+    public void setMailRoomManager(MailRoomManager mailRoomManager) {
+        this.mailRoomManager = mailRoomManager;
     }
 
     public void assignCommission(Player player, String commissionId) {
@@ -56,10 +61,25 @@ public class CommissionManager {
         stateStore.setState(uuid, state);
         player.sendMessage(PREFIX + ChatColor.GREEN + "Commission accepted: "
                 + def.getDisplayName() + " — " + def.getDescription());
+        if (def.getType().equalsIgnoreCase("MAIL_SORTING") && mailRoomManager != null) {
+            int rankNum = rankManager != null ? rankManager.getPlayerRank(uuid) : 1;
+            mailRoomManager.assignMail(player, rankNum);
+        }
     }
 
     /** Cancels a player's active commission without reward. */
     public void cancelCommission(UUID uuid) {
+        // If the cancelled commission is MAIL_SORTING, clear any mail items
+        if (mailRoomManager != null) {
+            PlayerCommissionState cs = stateStore.getState(uuid);
+            if (cs != null && cs.getActiveCommissionId() != null) {
+                CommissionDefinition def = registry.getById(cs.getActiveCommissionId());
+                if (def != null && def.getType().equalsIgnoreCase("MAIL_SORTING")) {
+                    org.bukkit.entity.Player player = org.bukkit.Bukkit.getPlayer(uuid);
+                    if (player != null) mailRoomManager.clearMail(player);
+                }
+            }
+        }
         stateStore.clearState(uuid);
     }
 
@@ -91,6 +111,10 @@ public class CommissionManager {
         player.sendMessage(ChatColor.GOLD + "  Goal:     " + ChatColor.YELLOW
                 + def.getObjectiveQuantity() + "x " + formatItem(def.getObjectiveItem()));
         player.sendMessage(ChatColor.GOLD + "  Reward:   " + ChatColor.YELLOW + formatCoins(def.getRewardAmount()));
+        if (def.getType().equalsIgnoreCase("MAIL_SORTING") && mailRoomManager != null) {
+            int rankNum = rankManager != null ? rankManager.getPlayerRank(uuid) : 1;
+            mailRoomManager.assignMail(player, rankNum);
+        }
     }
 
     public void incrementProgress(UUID uuid, int amount) {
@@ -169,6 +193,13 @@ public class CommissionManager {
                     + ChatColor.RED + " (" + remaining + " remaining).");
             return;
         }
+
+        // MAIL_SORTING has its own completion logic — no inventory item check
+        if (def.getType().equalsIgnoreCase("MAIL_SORTING")) {
+            completeMailSorting(player, uuid, def, state);
+            return;
+        }
+
         // Use turn-in item for inventory check (may differ from objective block, e.g. COAL_ORE -> COAL)
         Material material = Material.matchMaterial(def.getTurnInItem());
         if (material == null) {
@@ -211,6 +242,71 @@ public class CommissionManager {
         if (def.getShardsReward() > 0) {
             player.sendMessage(ChatColor.AQUA + "  Shards:     " + ChatColor.WHITE + formatCoins(currencyManager.getShards(uuid)));
         }
+    }
+
+    private void completeMailSorting(Player player, UUID uuid, CommissionDefinition def,
+                                     PlayerCommissionState state) {
+        MailSortingState mailState = mailRoomManager != null ? mailRoomManager.getState(uuid) : null;
+        if (mailState == null || !mailState.isComplete()) {
+            player.sendMessage(PREFIX + ChatColor.RED + "Deliver all mail to the barrels first!");
+            return;
+        }
+
+        int total = mailState.getTotalMail();
+        int correct = mailState.getCorrect();
+        double accuracy = total > 0 ? (correct * 100.0 / total) : 0.0;
+
+        double maxGoldBonus = mailRoomManager.getMaxGoldBonus();
+        double maxShardsBonus = mailRoomManager.getMaxShardsBonus();
+        double goldBonus = maxGoldBonus * (accuracy / 100.0);
+        double shardsBonus = maxShardsBonus * (accuracy / 100.0);
+
+        double baseGold = def.getRewardAmount();
+        if (escapeManager != null) {
+            baseGold = escapeManager.applyBonus(uuid, baseGold);
+        }
+        double totalGold = baseGold + goldBonus;
+        double totalShards = def.getShardsReward() + shardsBonus;
+
+        currencyManager.addBalance(uuid, totalGold);
+        if (totalShards > 0) {
+            currencyManager.addShards(uuid, totalShards);
+        }
+
+        if (mailRoomManager != null) mailRoomManager.clearMail(player);
+        stateStore.clearState(uuid);
+
+        String escapePart = "";
+        if (escapeManager != null && escapeManager.getEscapeLevel(uuid) > 0) {
+            int bonusPct = (int) ((escapeManager.getGoldCoinMultiplier(uuid) - 1.0) * 100);
+            escapePart = ChatColor.GRAY + " (+" + bonusPct + "% escape bonus)";
+        }
+
+        player.sendMessage(PREFIX + ChatColor.GREEN + "Commission complete!");
+        player.sendMessage(ChatColor.GOLD + "  Accuracy: " + ChatColor.YELLOW
+                + String.format("%.0f%%", accuracy)
+                + ChatColor.GRAY + " (" + correct + "/" + total + " correct)");
+        player.sendMessage(ChatColor.GOLD + "  Base reward:  " + ChatColor.YELLOW
+                + formatNumber(baseGold) + " Gold Coins"
+                + (def.getShardsReward() > 0 ? ChatColor.GOLD + " + " + ChatColor.AQUA + formatNumber(def.getShardsReward()) + " Shards" : "")
+                + escapePart);
+        player.sendMessage(ChatColor.GOLD + "  Accuracy bonus: " + ChatColor.YELLOW
+                + formatNumber(goldBonus) + " Gold Coins"
+                + (shardsBonus > 0 ? ChatColor.GOLD + " + " + ChatColor.AQUA + formatNumber(shardsBonus) + " Shards" : ""));
+        player.sendMessage(ChatColor.GOLD + "  Total earned: " + ChatColor.YELLOW
+                + formatNumber(totalGold) + " Gold Coins"
+                + (totalShards > 0 ? ChatColor.GOLD + " + " + ChatColor.AQUA + formatNumber(totalShards) + " Shards" : ""));
+        player.sendMessage(ChatColor.GOLD + "  Gold Coins: " + ChatColor.YELLOW
+                + formatNumber(currencyManager.getBalance(uuid)));
+        if (totalShards > 0) {
+            player.sendMessage(ChatColor.AQUA + "  Shards:     " + ChatColor.WHITE
+                    + formatNumber(currencyManager.getShards(uuid)));
+        }
+    }
+
+    private String formatNumber(double amount) {
+        if (amount == Math.floor(amount)) return String.valueOf((long) amount);
+        return String.format("%.2f", amount);
     }
 
     private int countItem(Player player, Material material) {
