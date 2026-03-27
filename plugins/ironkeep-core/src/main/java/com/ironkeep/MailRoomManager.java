@@ -16,12 +16,16 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 
 public class MailRoomManager {
@@ -264,6 +268,67 @@ public class MailRoomManager {
 
     public double getMaxGoldBonus() { return maxGoldBonus; }
     public double getMaxShardsBonus() { return maxShardsBonus; }
+
+    /**
+     * Returns a sorted, deduplicated list of all destination names across all rank tiers.
+     */
+    public List<String> getAvailableDestinations() {
+        Set<String> all = new TreeSet<>();
+        for (List<String> dests : rankDestinations.values()) {
+            all.addAll(dests);
+        }
+        return new ArrayList<>(all);
+    }
+
+    /**
+     * Binds a barrel block to a destination name and persists to mail-room.yml.
+     */
+    public void bindBarrel(Block block, String destination) {
+        String worldName = block.getWorld().getName();
+        String key = barrelKey(worldName, block.getX(), block.getY(), block.getZ());
+        barrelDestinations.put(key, destination);
+        persistBarrels();
+    }
+
+    /**
+     * Removes a barrel binding and persists to mail-room.yml.
+     */
+    public void unbindBarrel(Block block) {
+        String worldName = block.getWorld().getName();
+        String key = barrelKey(worldName, block.getX(), block.getY(), block.getZ());
+        barrelDestinations.remove(key);
+        barrelFacings.remove(key);
+        persistBarrels();
+    }
+
+    private void persistBarrels() {
+        File file = new File(plugin.getDataFolder(), "mail-room.yml");
+        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+
+        List<Map<String, Object>> barrelList = new ArrayList<>();
+        for (Map.Entry<String, String> entry : barrelDestinations.entrySet()) {
+            String[] parts = entry.getKey().split(",");
+            if (parts.length != 4) continue;
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("destination", entry.getValue());
+            map.put("world", parts[0]);
+            map.put("x", Integer.parseInt(parts[1]));
+            map.put("y", Integer.parseInt(parts[2]));
+            map.put("z", Integer.parseInt(parts[3]));
+            String facing = barrelFacings.get(entry.getKey());
+            if (facing != null) {
+                map.put("facing", facing);
+            }
+            barrelList.add(map);
+        }
+        yaml.set("barrels", barrelList);
+
+        try {
+            yaml.save(file);
+        } catch (IOException e) {
+            plugin.getLogger().warning("MailRoomManager: failed to save mail-room.yml: " + e.getMessage());
+        }
+    }
 
     // -------------------------------------------------------------------------
     // Barrel setup

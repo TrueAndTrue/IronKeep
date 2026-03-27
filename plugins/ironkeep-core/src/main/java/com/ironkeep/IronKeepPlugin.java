@@ -21,6 +21,7 @@ public class IronKeepPlugin extends JavaPlugin {
     private MailRoomManager mailRoomManager;
     private KitchenManager kitchenManager;
     private SkillManager skillManager;
+    private BindingWandManager bindingWandManager;
 
     @SuppressWarnings("UnstableApiUsage")
     @Override
@@ -47,6 +48,8 @@ public class IronKeepPlugin extends JavaPlugin {
 
         mailRoomManager = new MailRoomManager(this);
         mailRoomManager.load();
+
+        bindingWandManager = new BindingWandManager(this);
 
         kitchenManager = new KitchenManager(this);
         kitchenManager.load();
@@ -84,6 +87,7 @@ public class IronKeepPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new FarmingListener(this), this);
         getServer().getPluginManager().registerEvents(new MailSortingListener(this), this);
         getServer().getPluginManager().registerEvents(new KitchenListener(this), this);
+        getServer().getPluginManager().registerEvents(new BindingWandListener(this), this);
 
         wardenManager = new WardenManager(this);
         getServer().getPluginManager().registerEvents(new WardenListener(this, wardenManager), this);
@@ -158,5 +162,9 @@ public class IronKeepPlugin extends JavaPlugin {
 
     public SkillManager getSkillManager() {
         return skillManager;
+    }
+
+    public BindingWandManager getBindingWandManager() {
+        return bindingWandManager;
     }
 }
