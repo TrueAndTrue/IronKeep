@@ -172,7 +172,9 @@ public class CommissionManager {
         stateStore.setState(uuid, state);
 
         int effectiveQty = state.getEffectiveQuantity(def.getObjectiveQuantity());
-        if (newProgress >= effectiveQty) {
+        if (newProgress >= effectiveQty
+                && !def.getType().equalsIgnoreCase("MAIL_SORTING")
+                && !def.getType().equalsIgnoreCase("COOKING")) {
             org.bukkit.entity.Player player = org.bukkit.Bukkit.getPlayer(uuid);
             if (player != null) {
                 player.sendMessage(org.bukkit.ChatColor.GREEN
@@ -193,7 +195,9 @@ public class CommissionManager {
         stateStore.setState(uuid, state);
 
         int effectiveQty = state.getEffectiveQuantity(def.getObjectiveQuantity());
-        if (newProgress >= effectiveQty) {
+        if (newProgress >= effectiveQty
+                && !def.getType().equalsIgnoreCase("MAIL_SORTING")
+                && !def.getType().equalsIgnoreCase("COOKING")) {
             player.sendMessage(ChatColor.GREEN
                     + "Commission objective reached! Use /commission complete to turn in.");
         }
