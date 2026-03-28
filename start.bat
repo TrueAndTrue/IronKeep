@@ -16,8 +16,12 @@ REM This picks up any new config files added in future without needing to update
 REM Excludes paper-plugin.yml which is plugin metadata, not a runtime config.
 for %%f in ("%~dp0plugins\ironkeep-core\src\main\resources\*.yml") do (
     if /I not "%%~nxf"=="paper-plugin.yml" (
-        copy /Y "%%f" "%~dp0server\plugins\IronKeep\%%~nxf" >nul
-        echo   Synced: %%~nxf
+        if not exist "%~dp0server\plugins\IronKeep\%%~nxf" (
+            copy "%%f" "%~dp0server\plugins\IronKeep\%%~nxf" >nul
+            echo   Copied (first time): %%~nxf
+        ) else (
+            echo   Skipped (exists): %%~nxf
+        )
     )
 )
 

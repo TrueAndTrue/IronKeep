@@ -81,17 +81,15 @@ public class MailSortingListener implements Listener {
 
         if (!cursorIsMail && !clickedIsMail) return;
 
-        // Allow actions within the player's own inventory
-        if (event.getClickedInventory() == player.getInventory()
-                && event.getView().getTopInventory() == player.getInventory()) {
+        // If no external inventory is open (player just has their own inventory open), allow
+        if (event.getView().getTopInventory().getType() == org.bukkit.event.inventory.InventoryType.CRAFTING
+                || event.getView().getTopInventory() == player.getInventory()) {
             return;
         }
 
         // Block moving mail items to or from external inventories
-        if (event.getView().getTopInventory() != player.getInventory()) {
-            event.setCancelled(true);
-            player.sendMessage(ChatColor.RED + "You cannot move mail items into other inventories.");
-        }
+        event.setCancelled(true);
+        player.sendMessage(ChatColor.RED + "You cannot move mail items into other inventories.");
     }
 
     /** Clear mail when a player quits while on a MAIL_SORTING commission. */
