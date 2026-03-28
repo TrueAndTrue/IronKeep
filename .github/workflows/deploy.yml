@@ -35,12 +35,13 @@ jobs:
           JAR=$(find plugins/ironkeep-core/build/libs -name "*.jar" ! -name "*-plain.jar" | head -1)
           echo "path=$JAR" >> $GITHUB_OUTPUT
 
-      - name: List SFTP root directory
+      - name: Upload JAR via SFTP
         run: |
           sshpass -p "${{ secrets.SFTP_PASS }}" \
             sftp -P ${{ secrets.SFTP_PORT }} \
               -o StrictHostKeyChecking=no \
               "${{ secrets.SFTP_USER }}@${{ secrets.SFTP_HOST }}" <<EOF
-          ls -la
+          cd "1. IronKeep/plugins"
+          put ${{ steps.jar.outputs.path }} ironkeep-core.jar
           bye
           EOF
