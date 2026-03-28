@@ -14,7 +14,15 @@ Mutations are saved immediately via `YamlConfiguration.save()`.
 
 ## Mail Room System
 The mail sorting commission type lets players deliver labelled mail items to
-the correct barrel. Configured in `mail-room.yml`.
+the correct barrel.
+
+**Config files:**
+- `mail-room.yml` — static config (accuracy-bonus, difficulty tiers, seed barrel
+  list). Synced from resources on each server start by `start.bat` — do NOT store
+  runtime data here.
+- `barrel-bindings.yml` — runtime barrel assignments created and managed by the
+  binding wand. Never overwritten by `start.bat`. Not bundled in resources; created
+  at runtime by `persistBarrels()` when barrels are bound/unbound.
 
 Key classes:
 - `MailRoomManager` — loads config, manages mail sessions, handles delivery
@@ -50,8 +58,8 @@ Admins can configure mailroom barrels in-game without editing YAML manually.
 
 **Persistence:**
 `MailRoomManager.bindBarrel` / `unbindBarrel` mutate the in-memory maps and
-call `persistBarrels()` which rewrites the `barrels` list in `mail-room.yml`
-immediately.
+call `persistBarrels()` which writes the full barrel list to `barrel-bindings.yml`
+immediately. `mail-room.yml` is never modified at runtime.
 
 ## Skill System
 Skill progression is stored in `data/skill-levels.yml`. Levels cap at the
