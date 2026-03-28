@@ -21,7 +21,13 @@ jobs:
 
       - name: Make gradlew executable
         working-directory: plugins/ironkeep-core
-        run: chmod +x gradlew
+        run: |
+          sed -i 's/\r//' gradlew
+          chmod +x gradlew
+  
+      - name: Build plugin
+        working-directory: plugins/ironkeep-core
+        run: ./gradlew build -x deployPlugin --no-daemon
 
       - name: Build plugin
         working-directory: plugins/ironkeep-core
