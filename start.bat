@@ -15,16 +15,20 @@ if not exist "%~dp0server\plugins\IronKeep" mkdir "%~dp0server\plugins\IronKeep"
 REM Copy all .yml files from resources to the plugin data folder automatically.
 REM This picks up any new config files added in future without needing to update this script.
 REM Excludes paper-plugin.yml which is plugin metadata, not a runtime config.
-for %%f in ("%~dp0plugins\ironkeep-core\src\main\resources\*.yml") do (
-    if /I not "%%~nxf"=="paper-plugin.yml" (
-        if not exist "%~dp0server\plugins\IronKeep\%%~nxf" (
-            copy "%%f" "%~dp0server\plugins\IronKeep\%%~nxf" >nul
-            echo   Copied (first time): %%~nxf
-        ) else (
-            echo   Skipped (exists): %%~nxf
-        )
-    )
+for %%f in ("%~dp0plugins\ironkeep-core\src\main\resources\*.yml") do call :copyfirst "%%f" "%%~nxf"
+goto :startserver
+
+:copyfirst
+if /I "%~2"=="paper-plugin.yml" goto :eof
+if not exist "%~dp0server\plugins\IronKeep\%~2" (
+    copy "%~1" "%~dp0server\plugins\IronKeep\%~2" >nul
+    echo   Copied (first time): %~2
+) else (
+    echo   Skipped (exists): %~2
 )
+goto :eof
+
+:startserver
 
 echo Starting server...
 cd /d "%~dp0server"
