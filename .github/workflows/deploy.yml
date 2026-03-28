@@ -29,9 +29,6 @@ jobs:
         working-directory: plugins/ironkeep-core
         run: ./gradlew build -x deployPlugin --no-daemon
 
-      - name: Build plugin
-        working-directory: plugins/ironkeep-core
-        run: ./gradlew build -x deployPlugin --no-daemon
       - name: Find JAR
         id: jar
         run: |
