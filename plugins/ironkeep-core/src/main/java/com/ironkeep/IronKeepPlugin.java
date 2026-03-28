@@ -25,6 +25,7 @@ public class IronKeepPlugin extends JavaPlugin {
     private DailyQuestManager dailyQuestManager;
     private ZoneManager zoneManager;
     private MailRoomManager mailRoomManager;
+    private BindingWandManager bindingWandManager;
     private KitchenManager kitchenManager;
     private SkillManager skillManager;
     private DailyBonusManager dailyBonusManager;
@@ -57,6 +58,8 @@ public class IronKeepPlugin extends JavaPlugin {
 
         mailRoomManager = new MailRoomManager(this);
         mailRoomManager.load();
+
+        bindingWandManager = new BindingWandManager(this);
 
         kitchenManager = new KitchenManager(this);
         kitchenManager.load();
@@ -95,6 +98,7 @@ public class IronKeepPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new FarmingListener(this), this);
         getServer().getPluginManager().registerEvents(new MailSortingListener(this), this);
         getServer().getPluginManager().registerEvents(new KitchenListener(this), this);
+        getServer().getPluginManager().registerEvents(new BindingWandListener(this), this);
 
         wardenManager = new WardenManager(this);
         getServer().getPluginManager().registerEvents(new WardenListener(this, wardenManager), this);
@@ -183,6 +187,10 @@ public class IronKeepPlugin extends JavaPlugin {
 
     public MailRoomManager getMailRoomManager() {
         return mailRoomManager;
+    }
+
+    public BindingWandManager getBindingWandManager() {
+        return bindingWandManager;
     }
 
     public KitchenManager getKitchenManager() {
