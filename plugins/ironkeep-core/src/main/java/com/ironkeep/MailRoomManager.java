@@ -16,12 +16,14 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.TreeSet;
 import java.util.UUID;
 
 public class MailRoomManager {
@@ -85,27 +87,36 @@ public class MailRoomManager {
             }
         }
 
-        // Barrel locations
-        List<?> barrelList = yaml.getList("barrels");
-        if (barrelList != null) {
-            for (Object obj : barrelList) {
-                if (!(obj instanceof Map<?, ?> map)) continue;
-                String destination = String.valueOf(map.get("destination"));
-                String world = String.valueOf(map.get("world"));
-                int x = toInt(map.get("x"));
-                int y = toInt(map.get("y"));
-                int z = toInt(map.get("z"));
-                String key = barrelKey(world, x, y, z);
-                barrelDestinations.put(key, destination);
-                if (map.containsKey("facing")) {
-                    barrelFacings.put(key, String.valueOf(map.get("facing")).toUpperCase());
-                }
-            }
+        // Barrel locations from mail-room.yml
+        loadBarrelList(yaml.getList("barrels"));
+
+        // Barrel bindings from barrel-bindings.yml (overrides/adds to mail-room.yml entries)
+        File bindingsFile = new File(plugin.getDataFolder(), "barrel-bindings.yml");
+        if (bindingsFile.exists()) {
+            YamlConfiguration bindingsYaml = YamlConfiguration.loadConfiguration(bindingsFile);
+            loadBarrelList(bindingsYaml.getList("barrels"));
         }
 
         plugin.getLogger().info("MailRoomManager: loaded "
                 + rankDestinations.size() + " rank difficulties, "
                 + barrelDestinations.size() + " barrel(s).");
+    }
+
+    private void loadBarrelList(List<?> barrelList) {
+        if (barrelList == null) return;
+        for (Object obj : barrelList) {
+            if (!(obj instanceof Map<?, ?> map)) continue;
+            String destination = String.valueOf(map.get("destination"));
+            String world = String.valueOf(map.get("world"));
+            int x = toInt(map.get("x"));
+            int y = toInt(map.get("y"));
+            int z = toInt(map.get("z"));
+            String key = barrelKey(world, x, y, z);
+            barrelDestinations.put(key, destination);
+            if (map.containsKey("facing")) {
+                barrelFacings.put(key, String.valueOf(map.get("facing")).toUpperCase());
+            }
+        }
     }
 
     private int toInt(Object obj) {
@@ -264,6 +275,56 @@ public class MailRoomManager {
 
     public double getMaxGoldBonus() { return maxGoldBonus; }
     public double getMaxShardsBonus() { return maxShardsBonus; }
+
+    // -------------------------------------------------------------------------
+    // Barrel binding (wand)
+    // -------------------------------------------------------------------------
+
+    public List<String> getAvailableDestinations() {
+        TreeSet<String> set = new TreeSet<>();
+        for (List<String> dests : rankDestinations.values()) {
+            set.addAll(dests);
+        }
+        return new ArrayList<>(set);
+    }
+
+    public void bindBarrel(Block block, String destination) {
+        String key = barrelKey(block.getWorld().getName(), block.getX(), block.getY(), block.getZ());
+        barrelDestinations.put(key, destination);
+        persistBarrels();
+    }
+
+    public void unbindBarrel(Block block) {
+        String key = barrelKey(block.getWorld().getName(), block.getX(), block.getY(), block.getZ());
+        barrelDestinations.remove(key);
+        barrelFacings.remove(key);
+        persistBarrels();
+    }
+
+    private void persistBarrels() {
+        File file = new File(plugin.getDataFolder(), "barrel-bindings.yml");
+        YamlConfiguration yaml = new YamlConfiguration();
+        List<Map<String, Object>> barrelList = new ArrayList<>();
+        for (Map.Entry<String, String> entry : barrelDestinations.entrySet()) {
+            String[] parts = entry.getKey().split(",");
+            if (parts.length != 4) continue;
+            Map<String, Object> map = new HashMap<>();
+            map.put("world", parts[0]);
+            map.put("x", Integer.parseInt(parts[1]));
+            map.put("y", Integer.parseInt(parts[2]));
+            map.put("z", Integer.parseInt(parts[3]));
+            map.put("destination", entry.getValue());
+            String facing = barrelFacings.get(entry.getKey());
+            if (facing != null) map.put("facing", facing);
+            barrelList.add(map);
+        }
+        yaml.set("barrels", barrelList);
+        try {
+            yaml.save(file);
+        } catch (IOException e) {
+            plugin.getLogger().warning("MailRoomManager: failed to save barrel-bindings.yml: " + e.getMessage());
+        }
+    }
 
     // -------------------------------------------------------------------------
     // Barrel setup
