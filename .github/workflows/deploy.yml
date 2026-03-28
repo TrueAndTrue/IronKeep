@@ -35,22 +35,13 @@ jobs:
           JAR=$(find plugins/ironkeep-core/build/libs -name "*.jar" ! -name "*-plain.jar" | head -1)
           echo "path=$JAR" >> $GITHUB_OUTPUT
 
-      - name: Upload JAR to Pterodactyl
+      - name: Upload JAR via SFTP
         run: |
-          UPLOAD_URL=$(curl -s \
-            "${{ secrets.PTERODACTYL_URL }}/api/client/servers/${{ secrets.PTERODACTYL_SERVER_UUID }}/files/upload" \
-            -H "Authorization: Bearer ${{ secrets.PTERODACTYL_API_KEY }}" \
-            -H "Accept: application/json" \
-            | jq -r '.attributes.url')
-          curl -s -X POST "$UPLOAD_URL" \
-            -F "files=@${{ steps.jar.outputs.path }};filename=ironkeep-core.jar" \
-            -F "root=/plugins"
-
-      - name: Restart server
-        run: |
-          curl -s -X POST \
-            "${{ secrets.PTERODACTYL_URL }}/api/client/servers/${{ secrets.PTERODACTYL_SERVER_UUID }}/power" \
-            -H "Authorization: Bearer ${{ secrets.PTERODACTYL_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -H "Accept: application/json" \
-            -d '{"signal":"restart"}'
+          sshpass -p "${{ secrets.SFTP_PASS }}" \
+            sftp -P ${{ secrets.SFTP_PORT }} \
+              -o StrictHostKeyChecking=no \
+              "${{ secrets.SFTP_USER }}@${{ secrets.SFTP_HOST }}" <<EOF
+          cd plugins
+          put ${{ steps.jar.outputs.path }} ironkeep-core.jar
+          bye
+          EOF
