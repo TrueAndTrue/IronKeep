@@ -1,5 +1,4 @@
 @echo off
-setlocal enabledelayedexpansion
 echo Building IronKeep plugin...
 cd /d "%~dp0plugins\ironkeep-core"
 call gradlew.bat clean build
