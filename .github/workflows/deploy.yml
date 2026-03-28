@@ -19,6 +19,10 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
+      - name: Make gradlew executable
+        working-directory: plugins/ironkeep-core
+        run: chmod +x gradlew
+
       - name: Build plugin
         working-directory: plugins/ironkeep-core
         run: ./gradlew build -x deployPlugin --no-daemon
