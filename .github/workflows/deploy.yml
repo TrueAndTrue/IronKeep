@@ -36,12 +36,12 @@ jobs:
           echo "path=$JAR" >> $GITHUB_OUTPUT
 
       - name: Upload JAR via SFTP
+        timeout-minutes: 5
         run: |
-          sshpass -p "${{ secrets.SFTP_PASS }}" \
+          echo 'cd "1. IronKeep/plugins"
+          put ${{ steps.jar.outputs.path }} ironkeep-core.jar
+          bye' > /tmp/sftp_cmds
+          timeout 120 sshpass -p "${{ secrets.SFTP_PASS }}" \
             sftp -P ${{ secrets.SFTP_PORT }} \
               -o StrictHostKeyChecking=no \
-              "${{ secrets.SFTP_USER }}@${{ secrets.SFTP_HOST }}" <<EOF
-          cd "1. IronKeep/plugins"
-          put ${{ steps.jar.outputs.path }} ironkeep-core.jar
-          bye
-          EOF
+              "${{ secrets.SFTP_USER }}@${{ secrets.SFTP_HOST }}" < /tmp/sftp_cmds || true
