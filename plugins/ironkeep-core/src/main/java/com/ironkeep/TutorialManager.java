@@ -129,6 +129,9 @@ public class TutorialManager {
             guideLocations.put(key, loc);
 
             String labelText = l.getString("label", key);
+            // Force-load the chunk so the label entity stays tracked regardless of
+            // view distance settings on hosted servers.
+            world.setChunkForceLoaded(loc.getBlockX() >> 4, loc.getBlockZ() >> 4, true);
             spawnGuideLabel(key, loc, labelText);
         }
 
