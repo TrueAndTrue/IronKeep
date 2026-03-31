@@ -37,9 +37,7 @@ public class RankManager {
 
     private void loadDefinitions() {
         rankDefinitions.clear();
-        if (!ranksFile.exists()) {
-            plugin.saveResource("ranks.yml", false);
-        }
+        plugin.saveResource("ranks.yml", true);
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(ranksFile);
         ConfigurationSection section = yaml.getConfigurationSection("ranks");
         if (section == null) {

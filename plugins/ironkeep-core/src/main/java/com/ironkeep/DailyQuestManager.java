@@ -42,7 +42,7 @@ public class DailyQuestManager {
 
     private void loadConfig() {
         File configFile = new File(plugin.getDataFolder(), "daily-quests.yml");
-        if (!configFile.exists()) plugin.saveResource("daily-quests.yml", false);
+        plugin.saveResource("daily-quests.yml", true);
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(configFile);
         goldReward = yaml.getDouble("quest.gold-reward", 50.0);
         shardsReward = yaml.getDouble("quest.shards-reward", 50.0);

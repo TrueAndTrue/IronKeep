@@ -41,9 +41,7 @@ public class SkillManager {
     }
 
     private void loadConfig() {
-        if (!skillsConfigFile.exists()) {
-            plugin.saveResource("skills.yml", false);
-        }
+        plugin.saveResource("skills.yml", true);
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(skillsConfigFile);
         levelCap = yaml.getInt("level-cap", 50);
         xpCurveBase = yaml.getDouble("xp-curve-base", 200.0);

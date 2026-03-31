@@ -87,9 +87,7 @@ public class TutorialManager {
     // -------------------------------------------------------------------------
 
     public void load() {
-        if (!tutorialFile.exists()) {
-            plugin.saveResource("tutorial.yml", false);
-        }
+        plugin.saveResource("tutorial.yml", true);
         loadSteps();
         loadProgress();
     }

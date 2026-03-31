@@ -21,9 +21,7 @@ public class StarterKitConfig {
 
     public void load() {
         File file = new File(plugin.getDataFolder(), "starter-kit.yml");
-        if (!file.exists()) {
-            plugin.saveResource("starter-kit.yml", false);
-        }
+        plugin.saveResource("starter-kit.yml", true);
 
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
         List<?> raw = yaml.getList("kit");

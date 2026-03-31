@@ -46,7 +46,7 @@ public class EscapeManager {
     private void loadDefinitions() {
         bonusMultipliers.clear();
         escapeCosts.clear();
-        if (!escapesFile.exists()) plugin.saveResource("escapes.yml", false);
+        plugin.saveResource("escapes.yml", true);
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(escapesFile);
         ConfigurationSection section = yaml.getConfigurationSection("escapes");
         if (section == null) {

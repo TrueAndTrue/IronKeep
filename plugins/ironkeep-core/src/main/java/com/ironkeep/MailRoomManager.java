@@ -60,7 +60,7 @@ public class MailRoomManager {
         barrelFacings.clear();
 
         File file = new File(plugin.getDataFolder(), "mail-room.yml");
-        if (!file.exists()) plugin.saveResource("mail-room.yml", false);
+        plugin.saveResource("mail-room.yml", true);
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
 
         // Accuracy bonus

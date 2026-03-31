@@ -32,7 +32,7 @@ public class ZoneManager {
     public void load() {
         zones.clear();
         File zonesFile = new File(plugin.getDataFolder(), "zones.yml");
-        if (!zonesFile.exists()) plugin.saveResource("zones.yml", false);
+        plugin.saveResource("zones.yml", true);
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(zonesFile);
 
         blockWithoutZone = yaml.getBoolean("block-without-zone", true);
