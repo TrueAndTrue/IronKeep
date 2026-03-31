@@ -54,8 +54,9 @@ commissions:
   woodcutting_oak:
     type: WOODCUTTING
     display-name: "Lumber Run"
-    description: "Chop 2 oak logs for the carpenter."
-    objective-item: OAK_LOG
+    description: "Chop 2 oak wood for the carpenter."
+    objective-item: OAK_WOOD
+    turn-in-item: OAK_WOOD
     objective-quantity: 2
     reward-amount: 75.0
     shards-reward: 75.0
@@ -63,8 +64,9 @@ commissions:
   woodcutting_birch:
     type: WOODCUTTING
     display-name: "Birch Bundle"
-    description: "Gather 2 birch logs for the fletcher."
-    objective-item: BIRCH_LOG
+    description: "Gather 2 birch wood for the fletcher."
+    objective-item: BIRCH_WOOD
+    turn-in-item: BIRCH_WOOD
     objective-quantity: 2
     reward-amount: 55.0
     shards-reward: 55.0
@@ -76,6 +78,17 @@ commissions:
     display-name: "Wheat Harvest"
     description: "Harvest 2 wheat for the baker."
     objective-item: WHEAT
+    turn-in-item: WHEAT
+    objective-quantity: 2
+    reward-amount: 55.0
+    shards-reward: 55.0
+
+  farming_carrot:
+    type: FARMING
+    display-name: "Carrot Harvest"
+    description: "Harvest 2 carrots for the cook."
+    objective-item: CARROTS
+    turn-in-item: CARROT
     objective-quantity: 2
     reward-amount: 50.0
     shards-reward: 50.0

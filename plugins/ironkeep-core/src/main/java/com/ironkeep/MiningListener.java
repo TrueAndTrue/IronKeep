@@ -4,11 +4,12 @@ import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.inventory.ItemStack;
 
-import java.util.EnumSet;
-import java.util.Set;
+import java.util.Collection;
 
 public class MiningListener implements Listener {
 
@@ -18,7 +19,7 @@ public class MiningListener implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.NORMAL)
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
         CommissionManager commissionManager = plugin.getCommissionManager();
@@ -59,7 +60,44 @@ public class MiningListener implements Listener {
                     || loc.getZ() < minZ || loc.getZ() > maxZ) return;
         }
 
+        // All checks passed — allow this break.
+        event.setCancelled(false);
+
+        // Suppress natural drops and give the turn-in item directly to inventory.
+        // Uses block.getDrops(tool) so fortune enchantments are respected.
+        event.setDropItems(false);
+        Material turnIn = Material.matchMaterial(def.getTurnInItem());
+        if (turnIn != null) {
+            ItemStack tool = player.getInventory().getItemInMainHand();
+            Collection<ItemStack> drops = event.getBlock().getDrops(tool);
+            int fortuneAmount = drops.stream()
+                    .filter(s -> s.getType() == turnIn)
+                    .mapToInt(ItemStack::getAmount)
+                    .sum();
+            if (fortuneAmount == 0) fortuneAmount = 1; // fallback
+
+            // Apply commission item cap
+            PlayerCommissionState state = commissionManager.getPlayerState(player);
+            int effectiveQty = state != null
+                    ? state.getEffectiveQuantity(def.getObjectiveQuantity())
+                    : def.getObjectiveQuantity();
+            int currentCount = countItem(player, turnIn);
+            int toGive = Math.min(fortuneAmount, Math.max(0, effectiveQty - currentCount));
+
+            if (toGive > 0) {
+                player.getInventory().addItem(new ItemStack(turnIn, toGive));
+            }
+        }
+
         commissionManager.incrementProgress(player.getUniqueId(), 1);
+    }
+
+    private int countItem(Player player, Material material) {
+        int count = 0;
+        for (ItemStack stack : player.getInventory().getContents()) {
+            if (stack != null && stack.getType() == material) count += stack.getAmount();
+        }
+        return count;
     }
 
     /**

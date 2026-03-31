@@ -27,7 +27,7 @@ public class KitchenCommand implements BasicCommand {
     public Collection<String> suggest(CommandSourceStack stack, String[] args) {
         if (args.length <= 1) {
             String partial = args.length == 1 ? args[0].toLowerCase() : "";
-            return List.of("setup").stream().filter(s -> s.startsWith(partial)).toList();
+            return List.of("setup", "wand").stream().filter(s -> s.startsWith(partial)).toList();
         }
         return List.of();
     }
@@ -42,13 +42,21 @@ public class KitchenCommand implements BasicCommand {
             player.sendMessage(ChatColor.RED + "You don't have permission to use this command.");
             return;
         }
-        if (args.length == 0 || !args[0].equalsIgnoreCase("setup")) {
-            player.sendMessage(ChatColor.GOLD + "Usage: " + ChatColor.YELLOW + "/kitchen setup");
+        if (args.length == 0) {
+            player.sendMessage(ChatColor.GOLD + "Usage: " + ChatColor.YELLOW + "/kitchen <setup|wand>");
             return;
         }
-
-        World world = player.getWorld();
-        plugin.getKitchenManager().setupKitchen(world);
-        player.sendMessage(ChatColor.GREEN + "Kitchen set up in world '" + world.getName() + "'.");
+        switch (args[0].toLowerCase()) {
+            case "setup" -> {
+                World world = player.getWorld();
+                plugin.getKitchenManager().setupKitchen(world);
+                player.sendMessage(ChatColor.GREEN + "Kitchen set up in world '" + world.getName() + "'.");
+            }
+            case "wand" -> {
+                player.getInventory().addItem(plugin.getKitchenWandManager().createWand());
+                player.sendMessage(ChatColor.AQUA + "Kitchen Ingredient Wand given. Right-click any item frame to bind an ingredient.");
+            }
+            default -> player.sendMessage(ChatColor.GOLD + "Usage: " + ChatColor.YELLOW + "/kitchen <setup|wand>");
+        }
     }
 }

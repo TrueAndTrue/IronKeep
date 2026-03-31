@@ -4,13 +4,18 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -41,6 +46,10 @@ public class CommissionBoardListener implements Listener {
         this.commissionIdKey = new NamespacedKey(plugin, "commission_id");
     }
 
+    // -------------------------------------------------------------------------
+    // Block-type board interaction (existing)
+    // -------------------------------------------------------------------------
+
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
@@ -56,6 +65,54 @@ public class CommissionBoardListener implements Listener {
         if (event.getPlayer().isOp()) return;
         event.setCancelled(true);
     }
+
+    // -------------------------------------------------------------------------
+    // Item frame board interaction
+    // -------------------------------------------------------------------------
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onItemFrameInteract(PlayerInteractEntityEvent event) {
+        if (event.getHand() != EquipmentSlot.HAND) return;
+        if (!(event.getRightClicked() instanceof ItemFrame frame)) return;
+
+        Player player = event.getPlayer();
+        ItemStack held = player.getInventory().getItemInMainHand();
+
+        // Wand interaction — register/unregister the frame
+        if (plugin.getCommissionBoardWandManager().isWand(held)) {
+            if (!player.isOp()) {
+                player.sendMessage(ChatColor.RED + "You don't have permission to use the Commission Board Wand.");
+                return;
+            }
+            event.setCancelled(true);
+            if (boardManager.isFrameBoard(frame)) {
+                boardManager.removeFrameBoard(frame);
+                player.sendMessage(ChatColor.YELLOW + "Item frame unregistered as commission board.");
+            } else {
+                boardManager.addFrameBoard(frame);
+                player.sendMessage(ChatColor.GREEN + "Item frame registered as commission board.");
+            }
+            return;
+        }
+
+        // Normal right-click — open commission GUI if this frame is a registered board
+        if (!boardManager.isFrameBoard(frame)) return;
+        event.setCancelled(true);
+        openCommissionGui(player);
+    }
+
+    /** Prevent non-OP players from breaking registered item frame boards. */
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onHangingBreak(HangingBreakByEntityEvent event) {
+        if (!(event.getEntity() instanceof ItemFrame frame)) return;
+        if (!boardManager.isFrameBoard(frame)) return;
+        if (event.getRemover() instanceof Player player && player.isOp()) return;
+        event.setCancelled(true);
+    }
+
+    // -------------------------------------------------------------------------
+    // GUI click handling (shared by both board types)
+    // -------------------------------------------------------------------------
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
@@ -85,7 +142,14 @@ public class CommissionBoardListener implements Listener {
         }
     }
 
+    // -------------------------------------------------------------------------
+    // GUI builder
+    // -------------------------------------------------------------------------
+
     private void openCommissionGui(Player player) {
+        if (plugin.getTutorialManager() != null) {
+            plugin.getTutorialManager().onTrigger(player, TutorialStep.TriggerType.OPEN_BOARD);
+        }
         CommissionManager mgr = plugin.getCommissionManager();
         CurrencyManager currency = plugin.getCurrencyManager();
 
@@ -166,9 +230,11 @@ public class CommissionBoardListener implements Listener {
     private Material iconForType(String type) {
         if (type == null) return Material.PAPER;
         return switch (type.toUpperCase()) {
-            case "MINING" -> Material.IRON_PICKAXE;
+            case "MINING", "MINING_COAL", "MINING_IRON", "MINING_GOLD", "MINING_DIAMOND" -> Material.IRON_PICKAXE;
             case "WOODCUTTING" -> Material.IRON_AXE;
             case "FARMING" -> Material.WHEAT;
+            case "MAIL_SORTING" -> Material.PAPER;
+            case "COOKING" -> Material.BOWL;
             default -> Material.PAPER;
         };
     }
@@ -180,5 +246,4 @@ public class CommissionBoardListener implements Listener {
         pane.setItemMeta(meta);
         return pane;
     }
-
 }

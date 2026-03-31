@@ -104,6 +104,11 @@ public class DailyQuestManager {
                 .toEpochSecond();
     }
 
+    public void clearCompletion(UUID uuid) {
+        lastCompletion.remove(uuid);
+        saveState();
+    }
+
     public double getGoldReward() { return goldReward; }
     public double getShardsReward() { return shardsReward; }
     public String getQuestObjective() { return questObjective; }

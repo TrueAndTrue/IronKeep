@@ -27,11 +27,22 @@ public class CommissionCommand implements BasicCommand {
 
     @Override
     public Collection<String> suggest(CommandSourceStack stack, String[] args) {
+        boolean isOp = stack.getSender().isOp();
         if (args.length <= 1) {
             String partial = args.length == 1 ? args[0].toLowerCase() : "";
-            return List.of("new", "status", "complete", "list", "skip").stream()
-                    .filter(s -> s.startsWith(partial))
-                    .toList();
+            List<String> subs = new java.util.ArrayList<>(List.of("new", "status", "complete", "list"));
+            if (isOp) subs.addAll(List.of("skip", "choose", "board"));
+            return subs.stream().filter(s -> s.startsWith(partial)).toList();
+        }
+        if (args.length == 2) {
+            String partial = args[1].toLowerCase();
+            if (args[0].equalsIgnoreCase("board") && isOp) {
+                return List.of("wand").stream().filter(s -> s.startsWith(partial)).toList();
+            }
+            if (args[0].equalsIgnoreCase("choose") && isOp) {
+                return List.of("mining", "woodcutting", "farming", "mail", "kitchen").stream()
+                        .filter(s -> s.startsWith(partial)).toList();
+            }
         }
         return List.of();
     }
@@ -55,6 +66,7 @@ public class CommissionCommand implements BasicCommand {
             case "list" -> handleList(player);
             case "choose" -> handleChoose(player, args);
             case "skip" -> handleSkip(player);
+            case "board" -> handleBoard(player, args);
             default -> sendUsage(player);
         }
     }
@@ -75,6 +87,26 @@ public class CommissionCommand implements BasicCommand {
                 + state.getProgress() + "/" + def.getObjectiveQuantity());
         player.sendMessage(ChatColor.GOLD + "  Reward:   " + ChatColor.YELLOW + Math.round(def.getRewardAmount()) + " Gold Coins"
                 + (def.getShardsReward() > 0 ? ChatColor.GOLD + " + " + ChatColor.AQUA + Math.round(def.getShardsReward()) + " Shards" : ""));
+
+        // For cooking commissions, show the assigned recipe and ingredient list
+        if (def.getType().equalsIgnoreCase("COOKING")) {
+            KitchenManager km = plugin.getKitchenManager();
+            if (km != null) {
+                CookingState cookState = km.getState(player.getUniqueId());
+                if (cookState != null) {
+                    CookingRecipe recipe = km.getRecipe(cookState.getRecipeId());
+                    if (recipe != null) {
+                        player.sendMessage(ChatColor.GOLD + "  Recipe:   " + ChatColor.YELLOW + recipe.getDisplayName());
+                        player.sendMessage(ChatColor.GOLD + "  Ingredients (in order):");
+                        java.util.List<org.bukkit.Material> ingredients = recipe.getIngredients();
+                        for (int i = 0; i < ingredients.size(); i++) {
+                            player.sendMessage(ChatColor.GRAY + "    " + (i + 1) + ". "
+                                    + km.formatMaterial(ingredients.get(i)));
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private void handleList(Player player) {
@@ -142,7 +174,7 @@ public class CommissionCommand implements BasicCommand {
         String finalType = commissionType;
         java.util.List<CommissionDefinition> matching = plugin.getCommissionRegistry().getAll().values()
                 .stream()
-                .filter(d -> d.getType().equalsIgnoreCase(finalType))
+                .filter(d -> d.getType().toUpperCase().startsWith(finalType))
                 .collect(java.util.stream.Collectors.toList());
 
         if (matching.isEmpty()) {
@@ -152,6 +184,20 @@ public class CommissionCommand implements BasicCommand {
 
         CommissionDefinition chosen = matching.get(new java.util.Random().nextInt(matching.size()));
         plugin.getCommissionManager().assignCommission(player, chosen.getId());
+    }
+
+    private void handleBoard(Player player, String[] args) {
+        if (!player.isOp()) {
+            player.sendMessage(ChatColor.RED + "You don't have permission to use this command.");
+            return;
+        }
+        if (args.length < 2 || !args[1].equalsIgnoreCase("wand")) {
+            player.sendMessage(ChatColor.GOLD + "Usage: " + ChatColor.YELLOW + "/commission board wand");
+            return;
+        }
+        player.getInventory().addItem(plugin.getCommissionBoardWandManager().createWand());
+        player.sendMessage(ChatColor.DARK_RED + "Commission Board Wand given."
+                + ChatColor.GRAY + " Right-click an item frame to register/unregister it as a commission board.");
     }
 
     private void sendUsage(Player player) {
@@ -167,6 +213,8 @@ public class CommissionCommand implements BasicCommand {
         if (player.isOp()) {
             player.sendMessage(ChatColor.YELLOW + "/commission choose <type>"
                     + ChatColor.GRAY + " — [OP] Force a commission type (mining/woodcutting/farming/mail/kitchen)");
+            player.sendMessage(ChatColor.YELLOW + "/commission board wand"
+                    + ChatColor.GRAY + " — [OP] Get wand to register item frames as commission boards");
         }
     }
 

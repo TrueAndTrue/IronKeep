@@ -1,0 +1,215 @@
+# IronKeep Tutorial Configuration
+#
+# Steps are shown to new players in order. Each step waits for its 'trigger'
+# before advancing to the next step.
+#
+# Trigger types:
+#   AUTO               - Advance immediately (no player action needed)
+#   INTERACT_WARDEN    - Player right-clicks the Warden
+#   OPEN_BOARD         - Player opens the Commission Board
+#   ACCEPT_COMMISSION  - Player accepts any commission
+#   COMPLETE_COMMISSION - Player completes any commission
+#   RANK_UP            - Player ranks up via the Warden
+#
+# Optional fields per step:
+#   message    - Chat message sent when this step starts (supports & color codes)
+#   title      - Title shown on screen (supports & color codes)
+#   subtitle   - Subtitle shown on screen (supports & color codes)
+#   objective  - Short text shown in the action bar while this step is active.
+#                If the step has a guide-key, the live distance is appended automatically.
+#   guide-key  - Key from 'guide-locations' below; starts a proximity tracker that
+#                auto-assigns a commission when the player arrives.
+#   dialogue   - List of lines shown (with 2s delays) when the trigger fires.
+#                Advancement happens after the last line. Used for NPC speech.
+#   assign-commission - Commission ID to auto-assign when trigger fires (or when
+#                       player arrives at the guide location for ACCEPT_COMMISSION steps).
+
+tutorial:
+  steps:
+
+    # -------------------------------------------------------------------------
+    # Phase 1: Introduction — find the Warden
+    # -------------------------------------------------------------------------
+
+    - id: find_warden
+      message: "&6[Tutorial] &eYou've arrived at IronKeep. Find the Warden to receive your orders."
+      title: "&6IronKeep"
+      subtitle: "&eFind the Warden"
+      objective: "Talk to the Warden"
+      trigger: INTERACT_WARDEN
+      guide-key: WARDEN
+      assign-commission: mining_coal
+      dialogue:
+        - "&8[Warden] &7You there. New prisoner."
+        - "&8[Warden] &7Eyes forward. You're here to work, not to wander."
+        - "&8[Warden] &7Your first assignment: get to the mines and haul coal."
+        - "&8[Warden] &7Don't keep me waiting."
+
+    # -------------------------------------------------------------------------
+    # Phase 2: First commission — coal mining
+    # -------------------------------------------------------------------------
+
+    - id: mine_coal
+      message: "&6[Commission] &eMine coal in the Mining Area, then use /commission complete."
+      objective: "Mine Coal → /commission complete"
+      trigger: COMPLETE_COMMISSION
+      guide-key: MINING
+
+    # -------------------------------------------------------------------------
+    # Phase 3: Mail Room introduction
+    # The commission is auto-assigned when the player arrives at the Mail Room.
+    # -------------------------------------------------------------------------
+
+    - id: find_mailroom
+      message: "&8[Warden] &7Satisfactory. Report to the Mail Room for your next assignment."
+      objective: "Find the Mail Room"
+      trigger: ACCEPT_COMMISSION
+      guide-key: MAILROOM
+      assign-commission: mail_sorting_r1
+
+    - id: complete_mail
+      message: "&6[Commission] &eSort the mail, then use /commission complete."
+      objective: "Sort Mail → /commission complete"
+      trigger: COMPLETE_COMMISSION
+
+    # -------------------------------------------------------------------------
+    # Phase 4: Kitchen introduction
+    # The commission is auto-assigned when the player arrives at the Kitchen.
+    # -------------------------------------------------------------------------
+
+    - id: find_kitchen
+      message: "&8[Warden] &7Not bad. The Kitchen needs your help next. Head over there."
+      objective: "Find the Kitchen"
+      trigger: ACCEPT_COMMISSION
+      guide-key: KITCHEN
+      assign-commission: cooking_r1
+
+    - id: complete_kitchen
+      message: "&6[Commission] &eComplete the cooking commission, then use /commission complete."
+      objective: "Cook → /commission complete"
+      trigger: COMPLETE_COMMISSION
+
+    # -------------------------------------------------------------------------
+    # Phase 5: Free commissions — player earns their way to Rank Up
+    # -------------------------------------------------------------------------
+
+    - id: free_commissions
+      message: "&8[Warden] &7You know the ropes now. Keep completing commissions and come back to me when you're ready to advance."
+      objective: "Complete commissions · talk to the Warden to rank up"
+      trigger: RANK_UP
+
+    # -------------------------------------------------------------------------
+    # Phase 6: Post rank-up — Woodcutting introduction
+    # The commission is auto-assigned when the player enters the Woodcutting zone.
+    # -------------------------------------------------------------------------
+
+    - id: intro_woodcutting
+      message: "&8[Warden] &7Rank secured. The Woodcutting area is now open to you. Get to work."
+      objective: "Find the Woodcutting area"
+      trigger: ACCEPT_COMMISSION
+      guide-key: WOODCUTTING
+      assign-commission: woodcutting_oak
+
+    - id: complete_woodcutting
+      message: "&6[Commission] &eChop oak wood in the Woodcutting area, then use /commission complete."
+      objective: "Chop Oak Wood → /commission complete"
+      trigger: COMPLETE_COMMISSION
+      dialogue:
+        - "&8[Warden] &7Congratulations. You've figured out how to do more work for me."
+        - "&8[Warden] &7Come back when you've got a bit more working experience under your belt."
+        - "&8[Warden] &7Return to me when you have 300 Gold Coins to rank up again."
+
+    # -------------------------------------------------------------------------
+    # Phase 7: Free commissions — player earns their way to Rank 3
+    # -------------------------------------------------------------------------
+
+    - id: free_commissions_2
+      message: "&8[Warden] &7Good work. Keep at it and come back when you're ready to advance again."
+      objective: "Complete commissions · talk to the Warden to rank up"
+      trigger: RANK_UP
+
+    # -------------------------------------------------------------------------
+    # Phase 8: Post rank-up to 3 — Farming introduction
+    # The commission is auto-assigned when the player enters the Farming zone.
+    # -------------------------------------------------------------------------
+
+    - id: intro_farming
+      message: "&8[Warden] &7Rank secured. The Farming area is now open to you. Head over there."
+      objective: "Find the Farming area"
+      trigger: ACCEPT_COMMISSION
+      guide-key: FARMING
+      assign-commission: farming_wheat
+
+    - id: complete_farming
+      message: "&6[Commission] &eHarvest wheat in the Farming area, then use /commission complete."
+      objective: "Harvest Wheat → /commission complete"
+      trigger: COMPLETE_COMMISSION
+      dialogue:
+        - "&8[Warden] &7Not bad. You're becoming more useful by the day."
+        - "&8[Warden] &7You now have access to Mining, Woodcutting, Farming, Mail, and Cooking."
+        - "&8[Warden] &7Keep grinding. Freedom doesn't come cheap."
+
+    # -------------------------------------------------------------------------
+    # Phase 9: Tutorial complete
+    # -------------------------------------------------------------------------
+
+    - id: tutorial_complete
+      message: "&8[Warden] &aYou're finding your footing, prisoner. The rest is up to you."
+      title: "&aTutorial Complete"
+      subtitle: "&eKeep earning your freedom"
+      trigger: AUTO
+
+# -------------------------------------------------------------------------
+# Guide Locations
+#
+# Named locations used for proximity tracking. When a step's guide-key matches,
+# a live distance counter appears in the action bar. When the player arrives
+# within 3 blocks, the guide stops and any assign-commission is triggered.
+#
+# Note: guide-locations are NOT loaded until the world is available, so
+# world names must match exactly (case-sensitive).
+# -------------------------------------------------------------------------
+
+guide-locations:
+
+  WARDEN:
+    label: "Talk to the Warden"
+    world: world
+    x: 126.0
+    y: 1.0
+    z: -49.0
+
+  MAILROOM:
+    label: "Mail Room"
+    world: world
+    x: 104.0
+    y: 1.0
+    z: -38.0
+
+  KITCHEN:
+    label: "Kitchen"
+    world: world
+    x: 136.0
+    y: 1.0
+    z: -38.0
+
+  WOODCUTTING:
+    label: "Woodcutting"
+    world: world
+    x: 93.0
+    y: 1.0
+    z: -38.0
+
+  FARMING:
+    label: "Farming Area"
+    world: world
+    x: 136.0
+    y: 1.0
+    z: -62.0
+
+  MINING:
+    label: "Mining Area"
+    world: world
+    x: 93.0
+    y: 1.0
+    z: -62.0

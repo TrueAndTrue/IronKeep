@@ -20,6 +20,8 @@ public class CommissionManager {
     private KitchenManager kitchenManager;   // set after construction
     private SkillManager skillManager;       // set after construction
     private DailyBonusManager dailyBonusManager; // set after construction
+    private FarmingListener farmingListener;     // set after construction
+    private TutorialManager tutorialManager;     // set after construction
 
     public CommissionManager(CommissionRegistry registry, CommissionStateStore stateStore,
                              CurrencyManager currencyManager) {
@@ -50,6 +52,14 @@ public class CommissionManager {
 
     public void setDailyBonusManager(DailyBonusManager dailyBonusManager) {
         this.dailyBonusManager = dailyBonusManager;
+    }
+
+    public void setFarmingListener(FarmingListener farmingListener) {
+        this.farmingListener = farmingListener;
+    }
+
+    public void setTutorialManager(TutorialManager tutorialManager) {
+        this.tutorialManager = tutorialManager;
     }
 
     public void assignCommission(Player player, String commissionId) {
@@ -92,6 +102,16 @@ public class CommissionManager {
             int rankNum = rankManager != null ? rankManager.getPlayerRank(uuid) : 1;
             kitchenManager.assignRecipe(player, rankNum);
         }
+        if (farmingListener != null) {
+            if (def.getType().equalsIgnoreCase("FARMING")) {
+                farmingListener.onCommissionAssigned(player);
+            } else {
+                farmingListener.clearOverlay(player);
+            }
+        }
+        if (tutorialManager != null) {
+            tutorialManager.onTrigger(player, TutorialStep.TriggerType.ACCEPT_COMMISSION);
+        }
     }
 
     /** Cancels a player's active commission without reward. */
@@ -114,6 +134,16 @@ public class CommissionManager {
                 if (def != null && def.getType().equalsIgnoreCase("COOKING")) {
                     org.bukkit.entity.Player player = org.bukkit.Bukkit.getPlayer(uuid);
                     if (player != null) kitchenManager.clearCooking(player);
+                }
+            }
+        }
+        if (farmingListener != null) {
+            PlayerCommissionState cs = stateStore.getState(uuid);
+            if (cs != null && cs.getActiveCommissionId() != null) {
+                CommissionDefinition def = registry.getById(cs.getActiveCommissionId());
+                if (def != null && def.getType().equalsIgnoreCase("FARMING")) {
+                    org.bukkit.entity.Player player = org.bukkit.Bukkit.getPlayer(uuid);
+                    if (player != null) farmingListener.onCommissionEnded(player);
                 }
             }
         }
@@ -163,6 +193,16 @@ public class CommissionManager {
         if (def.getType().equalsIgnoreCase("COOKING") && kitchenManager != null) {
             int rankNum = rankManager != null ? rankManager.getPlayerRank(uuid) : 1;
             kitchenManager.assignRecipe(player, rankNum);
+        }
+        if (farmingListener != null) {
+            if (def.getType().equalsIgnoreCase("FARMING")) {
+                farmingListener.onCommissionAssigned(player);
+            } else {
+                farmingListener.clearOverlay(player);
+            }
+        }
+        if (tutorialManager != null) {
+            tutorialManager.onTrigger(player, TutorialStep.TriggerType.ACCEPT_COMMISSION);
         }
     }
 
@@ -224,6 +264,15 @@ public class CommissionManager {
     }
 
     public void skipCommission(Player player) {
+        if (farmingListener != null) {
+            PlayerCommissionState cs = stateStore.getState(player.getUniqueId());
+            if (cs != null && cs.getActiveCommissionId() != null) {
+                CommissionDefinition def = registry.getById(cs.getActiveCommissionId());
+                if (def != null && def.getType().equalsIgnoreCase("FARMING")) {
+                    farmingListener.onCommissionEnded(player);
+                }
+            }
+        }
         stateStore.clearState(player.getUniqueId());
     }
 
@@ -305,6 +354,9 @@ public class CommissionManager {
         }
 
         stateStore.clearState(uuid);
+        if (def.getType().equalsIgnoreCase("FARMING") && farmingListener != null) {
+            farmingListener.onCommissionEnded(player);
+        }
 
         // Build reward message
         String rewardMsg = ChatColor.YELLOW + "" + goldReward + " Gold Coins";
@@ -321,6 +373,9 @@ public class CommissionManager {
         player.sendMessage(ChatColor.GOLD + "  Gold Coins: " + ChatColor.YELLOW + formatNumber(currencyManager.getBalance(uuid)));
         if (shardsReward > 0) {
             player.sendMessage(ChatColor.AQUA + "  Shards:     " + ChatColor.WHITE + formatNumber(currencyManager.getShards(uuid)));
+        }
+        if (tutorialManager != null) {
+            tutorialManager.onTrigger(player, TutorialStep.TriggerType.COMPLETE_COMMISSION);
         }
     }
 
@@ -395,6 +450,9 @@ public class CommissionManager {
         if (totalShards > 0) {
             player.sendMessage(ChatColor.AQUA + "  Shards:     " + ChatColor.WHITE
                     + formatNumber(currencyManager.getShards(uuid)));
+        }
+        if (tutorialManager != null) {
+            tutorialManager.onTrigger(player, TutorialStep.TriggerType.COMPLETE_COMMISSION);
         }
     }
 
@@ -493,6 +551,9 @@ public class CommissionManager {
         if (totalShards > 0) {
             player.sendMessage(ChatColor.AQUA + "  Shards:     " + ChatColor.WHITE
                     + formatNumber(currencyManager.getShards(uuid)));
+        }
+        if (tutorialManager != null) {
+            tutorialManager.onTrigger(player, TutorialStep.TriggerType.COMPLETE_COMMISSION);
         }
     }
 

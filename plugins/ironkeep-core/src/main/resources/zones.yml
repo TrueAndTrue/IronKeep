@@ -26,13 +26,13 @@ zones:
 
   mining_zone:
     world: world
-    x1: -10
-    z1: 10
-    x2: 2
-    z2: 23
-    y-min: 70
-    y-max: 75
-    border-y: 70          # Y level at which to place the Obsidian border ring on startup
+    x1: 84
+    z1: -100
+    x2: 102
+    z2: 82
+    y-min: 2
+    y-max: 2
+    border-y: 2           # Y level at which to place the Obsidian border ring on startup
     commission-types:
       - MINING_COAL
       - MINING_IRON
@@ -41,23 +41,23 @@ zones:
 
   woodcutting_zone:
     world: world
-    x1: -10
-    z1: -16
-    x2: 2
-    z2: -3
-    y-min: 70
-    y-max: 72
+    x1: 102
+    z1: -20
+    x2: 84
+    z2: -2
+    y-min: 2
+    y-max: 11
     commission-types:
       - WOODCUTTING
 
   farming_zone:
     world: world
-    x1: -22
-    z1: -1
-    x2: -12
-    z2: 8
-    y-min: 70
-    y-max: 72
+    x1: 127
+    z1: -82
+    x2: 145
+    z2: -100
+    y-min: 2
+    y-max: 3
     commission-types:
       - FARMING
 

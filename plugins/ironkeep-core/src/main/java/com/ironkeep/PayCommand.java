@@ -7,6 +7,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -28,6 +30,18 @@ public class PayCommand implements BasicCommand {
 
     public void register(Commands commands) {
         commands.register("pay", "Send Shards to another player. Usage: /pay <player> <amount>", this);
+    }
+
+    @Override
+    public Collection<String> suggest(CommandSourceStack stack, String[] args) {
+        if (args.length <= 1) {
+            String partial = args.length == 1 ? args[0].toLowerCase() : "";
+            return Bukkit.getOnlinePlayers().stream()
+                    .map(Player::getName)
+                    .filter(n -> n.toLowerCase().startsWith(partial))
+                    .toList();
+        }
+        return List.of();
     }
 
     @Override

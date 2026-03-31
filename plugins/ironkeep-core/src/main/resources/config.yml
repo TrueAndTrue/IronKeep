@@ -1,10 +1,20 @@
+blacksmith:
+  spawn:
+    world: world
+    x: 128.0
+    y: 1.0
+    z: -51.0
+    yaw: 180.0
+    pitch: 0.0
+  cost-per-level: 100  # Shards per enchantment upgrade (e.g. None→I, I→II, etc.)
+
 warden:
   first-commission: mining_coal  # Commission ID assigned to first-join players after Warden dialogue
   spawn:
     world: world
-    x: 0.5
-    y: 71.0
-    z: 0.5
+    x: 126.0
+    y: 1.0
+    z: -49.0
     yaw: 0.0
     pitch: 0.0
 
@@ -36,10 +46,10 @@ mining:
 
 new-player-spawn:
   world: world
-  x: -7.0
-  y: 71.0
-  z: -2.0
-  yaw: 0.0
+  x: 195.0
+  y: 2.0
+  z: -50.0
+  yaw: 90.0
   pitch: 0.0
 
 farming:

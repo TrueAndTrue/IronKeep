@@ -45,5 +45,7 @@ public class Zone {
     public int getX2() { return x2; }
     public int getZ1() { return z1; }
     public int getZ2() { return z2; }
+    public int getYMin() { return yMin; }
+    public int getYMax() { return yMax; }
     public List<String> getCommissionTypes() { return commissionTypes; }
 }

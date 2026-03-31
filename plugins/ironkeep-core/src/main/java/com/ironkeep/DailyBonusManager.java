@@ -109,6 +109,11 @@ public class DailyBonusManager {
         saveState();
     }
 
+    public void clearBonuses(UUID uuid) {
+        claimedBonuses.remove(uuid);
+        saveState();
+    }
+
     public int getGoldBonus() { return goldBonus; }
     public int getXpBonus() { return xpBonus; }
 }

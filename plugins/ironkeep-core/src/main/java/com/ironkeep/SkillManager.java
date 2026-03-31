@@ -102,6 +102,11 @@ public class SkillManager {
         }
     }
 
+    public void resetSkills(UUID uuid) {
+        skillData.remove(uuid);
+        save();
+    }
+
     public PlayerSkillData getSkillData(UUID uuid, String type) {
         type = type.toUpperCase();
         skillData.computeIfAbsent(uuid, k -> new HashMap<>());

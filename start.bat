@@ -11,13 +11,28 @@ if %errorlevel% neq 0 (
 echo Syncing config files...
 if not exist "%~dp0server\plugins\IronKeep" mkdir "%~dp0server\plugins\IronKeep"
 
-REM Copy all .yml files from resources to the plugin data folder automatically.
-REM This picks up any new config files added in future without needing to update this script.
-REM Excludes paper-plugin.yml which is plugin metadata, not a runtime config.
+REM Copy .yml files from resources to the plugin data folder.
+REM Excludes paper-plugin.yml (plugin metadata).
+REM
+REM Pure-config files (no runtime data): always overwrite so edits deploy immediately.
+REM Runtime-data files (config.yml, kitchen.yml): seed-only — only copy if missing,
+REM   so commission board frame locations and ingredient frame bindings are not wiped.
 for %%f in ("%~dp0plugins\ironkeep-core\src\main\resources\*.yml") do (
     if /I not "%%~nxf"=="paper-plugin.yml" (
-        copy /Y "%%f" "%~dp0server\plugins\IronKeep\%%~nxf" >nul
-        echo   Synced: %%~nxf
+        if /I "%%~nxf"=="config.yml" (
+            if not exist "%~dp0server\plugins\IronKeep\%%~nxf" (
+                copy "%%f" "%~dp0server\plugins\IronKeep\%%~nxf" >nul
+                echo   Seeded: %%~nxf
+            )
+        ) else if /I "%%~nxf"=="kitchen.yml" (
+            if not exist "%~dp0server\plugins\IronKeep\%%~nxf" (
+                copy "%%f" "%~dp0server\plugins\IronKeep\%%~nxf" >nul
+                echo   Seeded: %%~nxf
+            )
+        ) else (
+            copy "%%f" "%~dp0server\plugins\IronKeep\%%~nxf" >nul
+            echo   Synced: %%~nxf
+        )
     )
 )
 

@@ -58,6 +58,11 @@ public class StarterKitManager {
         return received.contains(uuid);
     }
 
+    public void clearReceived(UUID uuid) {
+        received.remove(uuid);
+        save();
+    }
+
     public void markReceived(UUID uuid) {
         received.add(uuid);
         save();
@@ -91,9 +96,21 @@ public class StarterKitManager {
                 stack.setItemMeta(meta);
             }
 
-            Map<Integer, ItemStack> overflow = player.getInventory().addItem(stack);
-            for (ItemStack dropped : overflow.values()) {
-                player.getWorld().dropItem(player.getLocation(), dropped);
+            // Auto-equip armor into the appropriate slot; add everything else normally
+            String name = material.name();
+            if (name.endsWith("_HELMET") || name.equals("TURTLE_HELMET")) {
+                player.getInventory().setHelmet(stack);
+            } else if (name.endsWith("_CHESTPLATE") || name.equals("ELYTRA")) {
+                player.getInventory().setChestplate(stack);
+            } else if (name.endsWith("_LEGGINGS")) {
+                player.getInventory().setLeggings(stack);
+            } else if (name.endsWith("_BOOTS")) {
+                player.getInventory().setBoots(stack);
+            } else {
+                Map<Integer, ItemStack> overflow = player.getInventory().addItem(stack);
+                for (ItemStack dropped : overflow.values()) {
+                    player.getWorld().dropItem(player.getLocation(), dropped);
+                }
             }
         }
     }

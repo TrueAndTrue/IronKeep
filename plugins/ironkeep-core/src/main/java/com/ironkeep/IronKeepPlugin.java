@@ -26,9 +26,15 @@ public class IronKeepPlugin extends JavaPlugin {
     private ZoneManager zoneManager;
     private MailRoomManager mailRoomManager;
     private BindingWandManager bindingWandManager;
+    private CommissionBoardWandManager commissionBoardWandManager;
     private KitchenManager kitchenManager;
+    private KitchenWandManager kitchenWandManager;
     private SkillManager skillManager;
     private DailyBonusManager dailyBonusManager;
+    private BlockRegenManager blockRegenManager;
+    private FarmingListener farmingListener;
+    private BlacksmithManager blacksmithManager;
+    private TutorialManager tutorialManager;
 
     @SuppressWarnings("UnstableApiUsage")
     @Override
@@ -60,11 +66,13 @@ public class IronKeepPlugin extends JavaPlugin {
         mailRoomManager.load();
 
         bindingWandManager = new BindingWandManager(this);
+        commissionBoardWandManager = new CommissionBoardWandManager(this);
 
         kitchenManager = new KitchenManager(this);
         kitchenManager.load();
+        kitchenWandManager = new KitchenWandManager(this);
 
-        BlockRegenManager blockRegenManager = new BlockRegenManager(this);
+        blockRegenManager = new BlockRegenManager(this);
         blockRegenManager.load();
         getServer().getPluginManager().registerEvents(blockRegenManager, this);
 
@@ -82,28 +90,47 @@ public class IronKeepPlugin extends JavaPlugin {
         commissionManager.setSkillManager(skillManager);
         commissionManager.setDailyBonusManager(dailyBonusManager);
 
+        tutorialManager = new TutorialManager(this);
+        tutorialManager.load();
+        commissionManager.setTutorialManager(tutorialManager);
+
         commissionBoardManager = new CommissionBoardManager(this);
         commissionBoardManager.load();
         getServer().getPluginManager().registerEvents(new CommissionBoardListener(this, commissionBoardManager), this);
-        // Place board blocks after world is ready
-        getServer().getScheduler().runTaskLater(this, () -> commissionBoardManager.placeBoards(), 1L);
+        // Place board blocks and initialise zone blocks after world is ready
+        getServer().getScheduler().runTaskLater(this, () -> {
+            commissionBoardManager.placeBoards();
+            blockRegenManager.initMiningOreCounts();
+            blockRegenManager.initFarmingZone();
+            tutorialManager.initGuideLocations();
+        }, 1L);
 
         StarterKitConfig kitConfig = new StarterKitConfig(this);
         kitConfig.load();
         starterKitManager = new StarterKitManager(this, kitConfig);
         starterKitManager.load();
         getServer().getPluginManager().registerEvents(new StarterKitListener(this, starterKitManager), this);
+        getServer().getPluginManager().registerEvents(new DurabilityListener(), this);
+        getServer().getPluginManager().registerEvents(new TutorialListener(tutorialManager), this);
+        getServer().getPluginManager().registerEvents(new BlockProtectionListener(), this);
         getServer().getPluginManager().registerEvents(new WoodcuttingListener(this), this);
         getServer().getPluginManager().registerEvents(new MiningListener(this), this);
-        getServer().getPluginManager().registerEvents(new FarmingListener(this), this);
+        farmingListener = new FarmingListener(this);
+        getServer().getPluginManager().registerEvents(farmingListener, this);
+        getServer().getPluginManager().registerEvents(new CommissionItemLimitListener(this), this);
+        commissionManager.setFarmingListener(farmingListener);
         getServer().getPluginManager().registerEvents(new MailSortingListener(this), this);
         getServer().getPluginManager().registerEvents(new KitchenListener(this), this);
+        getServer().getPluginManager().registerEvents(new KitchenWandListener(this), this);
         getServer().getPluginManager().registerEvents(new BindingWandListener(this), this);
 
         wardenManager = new WardenManager(this);
         getServer().getPluginManager().registerEvents(new WardenListener(this, wardenManager), this);
         getServer().getScheduler().runTaskLater(this, wardenManager::spawnWarden, 20L);
 
+        blacksmithManager = new BlacksmithManager(this);
+        getServer().getPluginManager().registerEvents(new BlacksmithListener(this, blacksmithManager), this);
+        getServer().getScheduler().runTaskLater(this, blacksmithManager::spawnBlacksmith, 20L);
 
         LifecycleEventManager<Plugin> manager = this.getLifecycleManager();
         manager.registerEventHandler(LifecycleEvents.COMMANDS, event -> {
@@ -121,6 +148,8 @@ public class IronKeepPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(dql, this);
             dql.register(commands);
             new RemoveTargetCommand().register(commands);
+            new ResetPlayerCommand(this).register(commands);
+            new TutorialCommand(this).register(commands);
         });
 
         // Enable daylight cycle, lock weather to clear
@@ -130,12 +159,14 @@ public class IronKeepPlugin extends JavaPlugin {
                 boolean unusedTime = world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
                 @SuppressWarnings("removal")
                 boolean unusedWeather = world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+                @SuppressWarnings("removal")
+                boolean unusedKeepInv = world.setGameRule(GameRule.KEEP_INVENTORY, true);
                 world.setStorm(false);
                 world.setThundering(false);
             }
         }, 1L);
 
-        // Clock action bar — update every 20 ticks (1 second) to stay visible
+        // Clock action bar — update every 20 ticks (1 second) to stay visible.
         getServer().getScheduler().runTaskTimer(this, () -> {
             World world = getServer().getWorlds().isEmpty() ? null : getServer().getWorlds().get(0);
             if (world == null) return;
@@ -185,6 +216,10 @@ public class IronKeepPlugin extends JavaPlugin {
         return zoneManager;
     }
 
+    public BlockRegenManager getBlockRegenManager() {
+        return blockRegenManager;
+    }
+
     public MailRoomManager getMailRoomManager() {
         return mailRoomManager;
     }
@@ -197,12 +232,36 @@ public class IronKeepPlugin extends JavaPlugin {
         return kitchenManager;
     }
 
+    public KitchenWandManager getKitchenWandManager() {
+        return kitchenWandManager;
+    }
+
+    public CommissionBoardWandManager getCommissionBoardWandManager() {
+        return commissionBoardWandManager;
+    }
+
     public SkillManager getSkillManager() {
         return skillManager;
     }
 
     public DailyBonusManager getDailyBonusManager() {
         return dailyBonusManager;
+    }
+
+    public StarterKitManager getStarterKitManager() {
+        return starterKitManager;
+    }
+
+    public WardenManager getWardenManager() {
+        return wardenManager;
+    }
+
+    public BlacksmithManager getBlacksmithManager() {
+        return blacksmithManager;
+    }
+
+    public TutorialManager getTutorialManager() {
+        return tutorialManager;
     }
 
     /**

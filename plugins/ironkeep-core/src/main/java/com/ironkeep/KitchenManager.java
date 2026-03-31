@@ -18,13 +18,17 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 
 public class KitchenManager {
@@ -141,10 +145,10 @@ public class KitchenManager {
         UUID uuid = player.getUniqueId();
         String lastRecipeId = lastRecipeByPlayer.get(uuid);
 
-        // Recipes with rank-tier <= rankNumber (cumulative access)
+        // Recipes with rank-tier <= rankNumber AND all ingredients have configured item frames
         List<CookingRecipe> available = new ArrayList<>();
         for (CookingRecipe recipe : recipes) {
-            if (recipe.getRankTier() <= rankNumber) available.add(recipe);
+            if (recipe.getRankTier() <= rankNumber && allIngredientsAvailable(recipe)) available.add(recipe);
         }
 
         if (available.isEmpty()) {
@@ -176,7 +180,7 @@ public class KitchenManager {
 
     public void openCauldronGui(Player player) {
         UUID uuid = player.getUniqueId();
-        CookingState state = activeStates.get(uuid);
+        CookingState state = ensureState(player);
         if (state == null) {
             player.sendMessage(PREFIX + ChatColor.RED + "You don't have a cooking assignment yet.");
             return;
@@ -254,9 +258,36 @@ public class KitchenManager {
     public void handleCauldronClick(Player player, InventoryClickEvent event) {
         int rawSlot = event.getRawSlot();
 
-        // Player inventory area — allow normal picks but block shift-click into GUI
+        // Player inventory area — handle shift-click of cooking ingredients into GUI
         if (rawSlot >= 27) {
-            if (event.isShiftClick()) event.setCancelled(true);
+            if (event.isShiftClick()) {
+                event.setCancelled(true);
+                ItemStack clicked = event.getCurrentItem();
+                if (isCookingIngredient(clicked)) {
+                    CookingState shiftState = activeStates.get(player.getUniqueId());
+                    if (shiftState != null) {
+                        CookingRecipe shiftRecipe = getRecipe(shiftState.getRecipeId());
+                        if (shiftRecipe != null) {
+                            int slots = shiftRecipe.getIngredients().size();
+                            Inventory gui = event.getInventory();
+                            for (int i = 0; i < slots; i++) {
+                                ItemStack existing = gui.getItem(i);
+                                if (isSlotPlaceholder(existing)) {
+                                    ItemStack toPlace = clicked.clone();
+                                    toPlace.setAmount(1);
+                                    gui.setItem(i, toPlace);
+                                    if (clicked.getAmount() > 1) {
+                                        clicked.setAmount(clicked.getAmount() - 1);
+                                    } else {
+                                        player.getInventory().setItem(event.getSlot(), null);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             return;
         }
 
@@ -336,6 +367,11 @@ public class KitchenManager {
         state.setConfirmedIngredients(placed);
         state.setConfirmedOrder(true);
 
+        // Consume the ingredients from the GUI now so they aren't returned to inventory on close
+        for (int i = 0; i < n; i++) {
+            inv.setItem(i, null);
+        }
+
         // Schedule close to avoid closing inside event handler
         plugin.getServer().getScheduler().runTask(plugin, (Runnable) player::closeInventory);
 
@@ -356,13 +392,18 @@ public class KitchenManager {
         Material ingredient = ingredientFrameLocations.get(key);
         if (ingredient == null) return; // not a configured ingredient frame
 
-        // Check if player already has this cooking ingredient
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (isCookingIngredient(item) && item.getType() == ingredient) {
-                player.sendMessage(PREFIX + ChatColor.YELLOW
-                        + "You already have " + formatMaterial(ingredient) + ".");
-                return;
-            }
+        // Check how many of this ingredient the recipe requires vs. how many the player already holds
+        CookingState state = activeStates.get(player.getUniqueId());
+        CookingRecipe recipe = state != null ? getRecipe(state.getRecipeId()) : null;
+        long required = recipe == null ? 1
+                : recipe.getIngredients().stream().filter(i -> i == ingredient).count();
+        long alreadyHave = java.util.Arrays.stream(player.getInventory().getContents())
+                .filter(item -> isCookingIngredient(item) && item != null && item.getType() == ingredient)
+                .count();
+        if (alreadyHave >= required) {
+            player.sendMessage(PREFIX + ChatColor.YELLOW
+                    + "You already have all the " + formatMaterial(ingredient) + " needed.");
+            return;
         }
 
         // Give one tagged copy of the ingredient
@@ -397,6 +438,28 @@ public class KitchenManager {
 
     public CookingState getState(UUID uuid) {
         return activeStates.get(uuid);
+    }
+
+    /**
+     * Returns the player's CookingState, recovering it from the active commission if needed.
+     * This handles the case where the server restarts and in-memory state is lost.
+     */
+    public CookingState ensureState(Player player) {
+        UUID uuid = player.getUniqueId();
+        CookingState state = activeStates.get(uuid);
+        if (state == null) {
+            CommissionManager cm = plugin.getCommissionManager();
+            if (cm != null && cm.hasActiveCommission(player)) {
+                CommissionDefinition def = cm.getActiveCommission(player);
+                if (def != null && def.getType().equalsIgnoreCase("COOKING")) {
+                    int rankNum = plugin.getRankManager() != null
+                            ? plugin.getRankManager().getPlayerRank(uuid) : 1;
+                    assignRecipe(player, rankNum);
+                    state = activeStates.get(uuid);
+                }
+            }
+        }
+        return state;
     }
 
     public CookingRecipe getRecipe(String id) {
@@ -498,8 +561,71 @@ public class KitchenManager {
     // Helpers
     // -------------------------------------------------------------------------
 
-    private String formatMaterial(Material material) {
+    public String formatMaterial(Material material) {
         String name = material.name().replace('_', ' ').toLowerCase();
         return Character.toUpperCase(name.charAt(0)) + name.substring(1);
+    }
+
+    // -------------------------------------------------------------------------
+    // Wand: dynamic ingredient frame binding
+    // -------------------------------------------------------------------------
+
+    /** Returns all distinct ingredient materials used across all recipes. */
+    public Set<Material> getAllRecipeIngredients() {
+        Set<Material> ingredients = new LinkedHashSet<>();
+        for (CookingRecipe recipe : recipes) {
+            ingredients.addAll(recipe.getIngredients());
+        }
+        return ingredients;
+    }
+
+    /** Binds an item frame location to an ingredient and persists to kitchen.yml. */
+    public void bindIngredientFrame(org.bukkit.Location loc, Material ingredient) {
+        String worldName = loc.getWorld() != null ? loc.getWorld().getName() : "world";
+        String key = frameKey(worldName, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
+        ingredientFrameLocations.put(key, ingredient);
+        saveIngredientFrames();
+    }
+
+    /** Removes an item frame binding and persists to kitchen.yml. */
+    public void unbindIngredientFrame(org.bukkit.Location loc) {
+        String worldName = loc.getWorld() != null ? loc.getWorld().getName() : "world";
+        String key = frameKey(worldName, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
+        ingredientFrameLocations.remove(key);
+        saveIngredientFrames();
+    }
+
+    /** Writes the current ingredientFrameLocations back to kitchen.yml. */
+    private void saveIngredientFrames() {
+        File file = new File(plugin.getDataFolder(), "kitchen.yml");
+        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        List<Map<String, Object>> frameList = new ArrayList<>();
+        for (Map.Entry<String, Material> entry : ingredientFrameLocations.entrySet()) {
+            String[] parts = entry.getKey().split(",");
+            if (parts.length != 4) continue;
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("ingredient", entry.getValue().name());
+            map.put("world", parts[0]);
+            try {
+                map.put("x", Integer.parseInt(parts[1]));
+                map.put("y", Integer.parseInt(parts[2]));
+                map.put("z", Integer.parseInt(parts[3]));
+            } catch (NumberFormatException ignored) { continue; }
+            frameList.add(map);
+        }
+        yaml.set("ingredient-frames", frameList);
+        try {
+            yaml.save(file);
+        } catch (IOException e) {
+            plugin.getLogger().warning("KitchenManager: failed to save ingredient-frames: " + e.getMessage());
+        }
+    }
+
+    /** Returns true only if every ingredient in the recipe has at least one configured item frame. */
+    private boolean allIngredientsAvailable(CookingRecipe recipe) {
+        for (Material ingredient : recipe.getIngredients()) {
+            if (!ingredientFrameLocations.containsValue(ingredient)) return false;
+        }
+        return true;
     }
 }

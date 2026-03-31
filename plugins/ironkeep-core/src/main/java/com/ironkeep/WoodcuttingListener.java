@@ -4,6 +4,7 @@ import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
@@ -27,7 +28,7 @@ public class WoodcuttingListener implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.NORMAL)
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
         CommissionManager commissionManager = plugin.getCommissionManager();
@@ -71,6 +72,33 @@ public class WoodcuttingListener implements Listener {
                     || loc.getZ() < minZ || loc.getZ() > maxZ) return;
         }
 
+        // All checks passed — allow this break.
+        event.setCancelled(false);
+
+        // Suppress natural drops and give the turn-in item directly to inventory.
+        event.setDropItems(false);
+        Material turnIn = Material.matchMaterial(def.getTurnInItem());
+        if (turnIn != null) {
+            // Apply commission item cap
+            PlayerCommissionState state = commissionManager.getPlayerState(player);
+            int effectiveQty = state != null
+                    ? state.getEffectiveQuantity(def.getObjectiveQuantity())
+                    : def.getObjectiveQuantity();
+            int currentCount = countItem(player, turnIn);
+
+            if (currentCount < effectiveQty) {
+                player.getInventory().addItem(new ItemStack(turnIn, 1));
+            }
+        }
+
         commissionManager.incrementProgress(player.getUniqueId(), 1);
+    }
+
+    private int countItem(Player player, Material material) {
+        int count = 0;
+        for (ItemStack stack : player.getInventory().getContents()) {
+            if (stack != null && stack.getType() == material) count += stack.getAmount();
+        }
+        return count;
     }
 }
