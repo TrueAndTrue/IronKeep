@@ -20,12 +20,12 @@ commissions:
   mining_coal:
     type: MINING_COAL
     display-name: "Coal Haul"
-    description: "Mine 2 coal ore for the smelters."
+    description: "Mine 8 coal ore for the smelters."
     objective-item: COAL_ORE
     turn-in-item: COAL
-    objective-quantity: 2
-    reward-amount: 40.0
-    shards-reward: 40.0
+    objective-quantity: 8
+    reward-amount: 100.0
+    shards-reward: 60.0
 
   # --- Mail Sorting — Rank 1 ---
 
@@ -34,9 +34,9 @@ commissions:
     display-name: "Mail Sorting"
     description: "Sort mail in the Warden's Mail Room"
     objective-item: PAPER
-    objective-quantity: 4
-    reward-amount: 60.0
-    shards-reward: 60.0
+    objective-quantity: 6
+    reward-amount: 120.0
+    shards-reward: 70.0
 
   # --- Cooking — Rank 1 ---
 
@@ -46,81 +46,81 @@ commissions:
     description: "Prepare a dish in the Keep's Kitchen"
     objective-item: CAULDRON
     objective-quantity: 1
-    reward-amount: 80.0
-    shards-reward: 80.0
+    reward-amount: 150.0
+    shards-reward: 90.0
 
   # --- Woodcutting — Rank 2 ---
 
   woodcutting_oak:
     type: WOODCUTTING
     display-name: "Lumber Run"
-    description: "Chop 2 oak wood for the carpenter."
+    description: "Chop 10 oak wood for the carpenter."
     objective-item: OAK_WOOD
     turn-in-item: OAK_WOOD
-    objective-quantity: 2
-    reward-amount: 75.0
-    shards-reward: 75.0
+    objective-quantity: 10
+    reward-amount: 160.0
+    shards-reward: 95.0
 
   woodcutting_birch:
     type: WOODCUTTING
     display-name: "Birch Bundle"
-    description: "Gather 2 birch wood for the fletcher."
+    description: "Gather 10 birch wood for the fletcher."
     objective-item: BIRCH_WOOD
     turn-in-item: BIRCH_WOOD
-    objective-quantity: 2
-    reward-amount: 55.0
-    shards-reward: 55.0
+    objective-quantity: 10
+    reward-amount: 140.0
+    shards-reward: 80.0
 
   # --- Farming — Rank 3 ---
 
   farming_wheat:
     type: FARMING
     display-name: "Wheat Harvest"
-    description: "Harvest 2 wheat for the baker."
+    description: "Harvest 15 wheat for the baker."
     objective-item: WHEAT
     turn-in-item: WHEAT
-    objective-quantity: 2
-    reward-amount: 55.0
-    shards-reward: 55.0
+    objective-quantity: 15
+    reward-amount: 155.0
+    shards-reward: 90.0
 
   farming_carrot:
     type: FARMING
     display-name: "Carrot Harvest"
-    description: "Harvest 2 carrots for the cook."
+    description: "Harvest 15 carrots for the cook."
     objective-item: CARROTS
     turn-in-item: CARROT
-    objective-quantity: 2
-    reward-amount: 50.0
-    shards-reward: 50.0
+    objective-quantity: 15
+    reward-amount: 145.0
+    shards-reward: 85.0
 
   # --- Mining (Advanced) — Rank 4 ---
 
   mining_iron:
     type: MINING_IRON
     display-name: "Iron Rush"
-    description: "Mine 2 iron ore for the blacksmith."
+    description: "Mine 6 iron ore for the blacksmith."
     objective-item: IRON_ORE
     turn-in-item: RAW_IRON
-    objective-quantity: 2
-    reward-amount: 100.0
-    shards-reward: 100.0
+    objective-quantity: 6
+    reward-amount: 220.0
+    shards-reward: 130.0
 
   mining_gold:
     type: MINING_GOLD
     display-name: "Gold Fever"
-    description: "Mine 2 gold ore for the treasury."
+    description: "Mine 5 gold ore for the treasury."
     objective-item: GOLD_ORE
     turn-in-item: RAW_GOLD
-    objective-quantity: 2
-    reward-amount: 150.0
-    shards-reward: 150.0
+    objective-quantity: 5
+    reward-amount: 290.0
+    shards-reward: 170.0
 
   mining_diamond:
     type: MINING_DIAMOND
     display-name: "Diamond Expedition"
-    description: "Retrieve 2 diamonds for the guild vault."
+    description: "Retrieve 3 diamonds for the guild vault."
     objective-item: DIAMOND_ORE
     turn-in-item: DIAMOND
-    objective-quantity: 2
-    reward-amount: 500.0
-    shards-reward: 500.0
+    objective-quantity: 3
+    reward-amount: 420.0
+    shards-reward: 250.0

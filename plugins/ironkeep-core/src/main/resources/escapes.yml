@@ -11,15 +11,15 @@ escapes:
 
   escape1:
     level: 1
-    cost: 600
+    cost: 2200
     bonus-percent: 10
 
   escape2:
     level: 2
-    cost: 700
+    cost: 2500
     bonus-percent: 20
 
   escape3:
     level: 3
-    cost: 800
+    cost: 2800
     bonus-percent: 30
