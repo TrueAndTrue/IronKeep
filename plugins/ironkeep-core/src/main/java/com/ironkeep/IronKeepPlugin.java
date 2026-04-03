@@ -35,6 +35,7 @@ public class IronKeepPlugin extends JavaPlugin {
     private FarmingListener farmingListener;
     private BlacksmithManager blacksmithManager;
     private TutorialManager tutorialManager;
+    private SidebarManager sidebarManager;
 
     @SuppressWarnings("UnstableApiUsage")
     @Override
@@ -150,6 +151,10 @@ public class IronKeepPlugin extends JavaPlugin {
             new RemoveTargetCommand().register(commands);
             new ResetPlayerCommand(this).register(commands);
             new TutorialCommand(this).register(commands);
+            new FeedbackCommand(this).register(commands);
+            GuideCommand guideCommand = new GuideCommand(this);
+            getServer().getPluginManager().registerEvents(guideCommand, this);
+            guideCommand.register(commands);
         });
 
         // Enable daylight cycle, lock weather to clear
@@ -175,6 +180,10 @@ public class IronKeepPlugin extends JavaPlugin {
                 player.sendActionBar(clockText);
             }
         }, 20L, 20L);
+
+        sidebarManager = new SidebarManager(this);
+        getServer().getPluginManager().registerEvents(sidebarManager, this);
+        sidebarManager.start();
 
         getLogger().info("IronKeep enabled.");
     }
@@ -262,6 +271,10 @@ public class IronKeepPlugin extends JavaPlugin {
 
     public TutorialManager getTutorialManager() {
         return tutorialManager;
+    }
+
+    public SidebarManager getSidebarManager() {
+        return sidebarManager;
     }
 
     /**

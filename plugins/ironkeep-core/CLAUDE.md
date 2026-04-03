@@ -22,7 +22,8 @@ the codebase. See the [Maintaining This Document](#maintaining-this-document) se
 12. [Daily Quest System](#daily-quest-system)
 13. [Starter Kit & New Player Flow](#starter-kit--new-player-flow)
 14. [Warden NPC](#warden-npc)
-15. [Commands Reference](#commands-reference)
+15. [Sidebar Scoreboard](#sidebar-scoreboard)
+16. [Commands Reference](#commands-reference)
 16. [Configuration Files Reference](#configuration-files-reference)
 17. [Data Persistence Reference](#data-persistence-reference)
 18. [Critical Invariants & Edge Cases](#critical-invariants--edge-cases)
@@ -51,7 +52,8 @@ IronKeepPlugin (main class, wires everything)
 ├── CommissionManager         ← orchestrates all of the above (injected via setters)
 ├── CommissionBoardManager    ← config.yml board locations
 ├── StarterKitConfig/Manager  ← starter-kit.yml + received-kits.yml
-└── WardenManager             ← config.yml warden spawn
+├── WardenManager             ← config.yml warden spawn
+└── SidebarManager            ← per-player scoreboard sidebar (no config)
 ```
 
 ### Key Design Patterns
@@ -586,6 +588,40 @@ A Villager entity spawned at the configured location with:
 3. Mark player as seen
 
 **Protection:** Warden cannot be damaged, targeted by mobs, or interacted with by players.
+
+---
+
+## Sidebar Scoreboard
+
+A permanent right-side sidebar displayed to every online player via `SidebarManager`.
+
+### Layout
+
+```
+§6§lIronKeep        ← objective display name (title)
+PlayerName          ← score 5 (yellow)
+Rank: Inmate        ← score 4 (gray label, green value)
+Escape: Lv.0        ← score 3 (gray label, aqua value)
+                    ← score 2 (blank separator)
+Gold: 1,234         ← score 1 (gray label, gold value)
+Shards: 567         ← score 0 (gray label, light-purple value)
+```
+
+### Implementation
+
+- Each player gets a dedicated `Scoreboard` instance so values are player-specific.
+- Lines use the team-prefix trick: each line is a unique invisible color-code entry (e.g. `"§0§r"`);
+  a registered `Team` holds the entry and its `prefix` is updated with the visible text.
+- Scores are set once and never change; only team prefixes are updated on refresh.
+- Refreshes every 20 ticks (1 second) via a `runTaskTimer` in `SidebarManager.start()`.
+- `PlayerJoinEvent`: calls `setup(player)` with a 2-tick delay so managers have loaded player data.
+- `PlayerQuitEvent`: removes the board from the internal map (GC handles the Scoreboard object).
+
+### Invariant
+
+Do not send competing scoreboard assignments from other systems — calling `player.setScoreboard()`
+elsewhere will replace IronKeep's sidebar. If another system needs a scoreboard, it must either
+use the same `Scoreboard` object retrieved from `SidebarManager` or avoid `setScoreboard()`.
 
 ---
 

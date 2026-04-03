@@ -4,8 +4,8 @@
 # Accuracy bonus: extra Gold Coins and Shards awarded based on delivery accuracy.
 # Full bonus is granted at 100% accuracy; scales linearly down to 0% at 0% accuracy.
 accuracy-bonus:
-  max-gold-coins: 40.0
-  max-shards: 40.0
+  max-gold-coins: 120.0
+  max-shards: 70.0
 
 # Difficulty per rank: how many mail items to sort and which destinations are active.
 difficulty:
@@ -54,57 +54,54 @@ difficulty:
       - Workshop
 
 # Barrel locations: one BARREL block per destination.
-# Placed along Z:-24 (south row) and Z:-35 (north row) inside the mail_room zone.
 barrels:
   - destination: Armory
     world: world
-    x: 101
-    y: 3
-    z: -24
+    x: 99
+    y: 5
+    z: -27
   - destination: Kitchen
     world: world
-    x: 103
-    y: 3
-    z: -24
+    x: 99
+    y: 5
+    z: -29
   - destination: Warden Office
     world: world
-    x: 105
-    y: 3
-    z: -24
+    x: 99
+    y: 5
+    z: -31
   - destination: Infirmary
     world: world
-    x: 107
-    y: 3
-    z: -24
+    x: 99
+    y: 5
+    z: -33
   - destination: Guard Barracks
     world: world
     x: 109
-    y: 3
-    z: -24
+    y: 5
+    z: -33
   - destination: Storage
     world: world
-    x: 101
-    y: 3
-    z: -35
+    x: 109
+    y: 5
+    z: -31
   - destination: Medical Bay
     world: world
-    x: 103
-    y: 3
-    z: -35
+    x: 109
+    y: 5
+    z: -29
   - destination: Records Room
     world: world
-    x: 105
-    y: 3
-    z: -35
+    x: 109
+    y: 5
+    z: -27
   - destination: Chapel
     world: world
-    x: 107
-    y: 3
-    z: -35
-    facing: SOUTH
+    x: 105
+    y: 5
+    z: -24
   - destination: Workshop
     world: world
-    x: 109
-    y: 3
-    z: -35
-    facing: SOUTH
+    x: 103
+    y: 5
+    z: -24

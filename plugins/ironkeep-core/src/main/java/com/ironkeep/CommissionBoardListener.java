@@ -26,15 +26,18 @@ import org.bukkit.NamespacedKey;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class CommissionBoardListener implements Listener {
 
     private static final String GUI_TITLE = ChatColor.DARK_RED + "Commission Board";
-    private static final int GUI_SIZE = 27;
+    private static final int GUI_SIZE = 45;
 
     private static class BoardHolder implements InventoryHolder {
         @Override public Inventory getInventory() { return null; }
     }
+
+    private static final Random RANDOM = new Random();
 
     private final IronKeepPlugin plugin;
     private final CommissionBoardManager boardManager;
@@ -139,6 +142,9 @@ public class CommissionBoardListener implements Listener {
         if (displayName.equals("Complete Commission")) {
             player.closeInventory();
             plugin.getCommissionManager().completeCommission(player);
+        } else if (displayName.equals("Random Commission")) {
+            player.closeInventory();
+            assignRandom(player);
         }
     }
 
@@ -160,34 +166,45 @@ public class CommissionBoardListener implements Listener {
         for (int i = 0; i < GUI_SIZE; i++) gui.setItem(i, filler);
 
         if (mgr.hasActiveCommission(player)) {
-            // Show active commission in center
+            // Show active commission in center (row 2 center = slot 22)
             CommissionDefinition def = mgr.getActiveCommission(player);
             PlayerCommissionState state = mgr.getPlayerState(player);
             int progress = state != null ? state.getProgress() : 0;
 
-            Material mat = iconForType(def.getType());
-            ItemStack commItem = new ItemStack(mat);
+            ItemStack commItem = new ItemStack(iconForDef(def));
             ItemMeta commMeta = commItem.getItemMeta();
             commMeta.setDisplayName(ChatColor.GOLD + def.getDisplayName());
             commMeta.setLore(Arrays.asList(
                     ChatColor.GRAY + def.getDescription(),
                     ChatColor.YELLOW + "Progress: " + progress + "/" + def.getObjectiveQuantity(),
                     ChatColor.YELLOW + "Reward: " + Math.round(def.getRewardAmount()) + " Gold Coins",
-                    ChatColor.DARK_GRAY + "Use /commission complete to turn in"
+                    ChatColor.DARK_GRAY + "Return to the Commission Board to collect"
             ));
             commItem.setItemMeta(commMeta);
-            gui.setItem(11, commItem);
+            gui.setItem(20, commItem);
 
-            // Complete button
+            // Complete button — slot 25 (index 24)
             ItemStack completeBtn = new ItemStack(Material.CHEST);
             ItemMeta completeMeta = completeBtn.getItemMeta();
             completeMeta.setDisplayName(ChatColor.GREEN + "Complete Commission");
             completeMeta.setLore(List.of(ChatColor.GRAY + "Turn in your completed commission."));
             completeBtn.setItemMeta(completeMeta);
-            gui.setItem(15, completeBtn);
+            gui.setItem(24, completeBtn);
 
         } else {
+            // Random commission button — top row center (slot 4)
+            ItemStack randomBtn = new ItemStack(Material.NETHER_STAR);
+            ItemMeta randomMeta = randomBtn.getItemMeta();
+            randomMeta.setDisplayName(ChatColor.YELLOW + "Random Commission");
+            randomMeta.setLore(List.of(
+                    ChatColor.GRAY + "Let the Warden decide your fate.",
+                    ChatColor.GREEN + "Click to receive a random commission"
+            ));
+            randomBtn.setItemMeta(randomMeta);
+            gui.setItem(4, randomBtn);
+
             // Show commissions filtered by player's rank
+            // Content slots: rows 1-3, columns 1-7 → 10-16, 19-25, 28-34
             java.util.List<CommissionDefinition> rankFiltered = plugin.getRankManager() != null
                     ? plugin.getRankManager().getAccessibleCommissions(player.getUniqueId())
                     : new java.util.ArrayList<>(plugin.getCommissionRegistry().getAll().values());
@@ -195,9 +212,8 @@ public class CommissionBoardListener implements Listener {
             for (CommissionDefinition c : rankFiltered) all.put(c.getId(), c);
             int slot = 10;
             for (CommissionDefinition def : all.values()) {
-                if (slot >= GUI_SIZE - 4) break;
-                Material mat = iconForType(def.getType());
-                ItemStack item = new ItemStack(mat);
+                if (slot > 34) break;
+                ItemStack item = new ItemStack(iconForDef(def));
                 ItemMeta meta = item.getItemMeta();
                 meta.setDisplayName(ChatColor.GOLD + def.getDisplayName());
                 String rewardLine = ChatColor.YELLOW + "Reward: " + Math.round(def.getRewardAmount()) + " Gold Coins"
@@ -211,31 +227,49 @@ public class CommissionBoardListener implements Listener {
                 item.setItemMeta(meta);
                 gui.setItem(slot, item);
                 slot++;
-                if (slot == 17) slot = 19; // skip border
+                if (slot == 17) slot = 19; // skip right border of row 1
+                if (slot == 26) slot = 28; // skip right border of row 2
             }
         }
 
-        // Balance display
+        // Balance display — bottom row, slot 40 when no active commission, slot 38 when active
         double balance = currency.getBalance(player.getUniqueId());
         ItemStack balItem = new ItemStack(Material.GOLD_INGOT);
         ItemMeta balMeta = balItem.getItemMeta();
         balMeta.setDisplayName(ChatColor.GOLD + "Your Balance");
         balMeta.setLore(List.of(ChatColor.YELLOW + "" + Math.round(balance) + " Gold Coins"));
         balItem.setItemMeta(balMeta);
-        gui.setItem(22, balItem);
+        gui.setItem(mgr.hasActiveCommission(player) ? 40 : 40, balItem);
 
         player.openInventory(gui);
     }
 
-    private Material iconForType(String type) {
-        if (type == null) return Material.PAPER;
-        return switch (type.toUpperCase()) {
-            case "MINING", "MINING_COAL", "MINING_IRON", "MINING_GOLD", "MINING_DIAMOND" -> Material.IRON_PICKAXE;
-            case "WOODCUTTING" -> Material.IRON_AXE;
-            case "FARMING" -> Material.WHEAT;
-            case "MAIL_SORTING" -> Material.PAPER;
-            case "COOKING" -> Material.BOWL;
-            default -> Material.PAPER;
+    private void assignRandom(Player player) {
+        java.util.List<CommissionDefinition> accessible = plugin.getRankManager() != null
+                ? plugin.getRankManager().getAccessibleCommissions(player.getUniqueId())
+                : new java.util.ArrayList<>(plugin.getCommissionRegistry().getAll().values());
+        if (accessible.isEmpty()) {
+            player.sendMessage(ChatColor.RED + "No commissions available for your rank.");
+            return;
+        }
+        CommissionDefinition pick = accessible.get(RANDOM.nextInt(accessible.size()));
+        plugin.getCommissionManager().assignCommission(player, pick.getId());
+    }
+
+    private Material iconForDef(CommissionDefinition def) {
+        if (def == null) return Material.PAPER;
+        String type = def.getType() == null ? "" : def.getType().toUpperCase();
+        String obj  = def.getObjectiveItem() == null ? "" : def.getObjectiveItem().toUpperCase();
+        return switch (type) {
+            case "MINING_COAL"    -> Material.COAL;
+            case "MINING_IRON"    -> Material.RAW_IRON;
+            case "MINING_GOLD"    -> Material.RAW_GOLD;
+            case "MINING_DIAMOND" -> Material.DIAMOND;
+            case "WOODCUTTING"    -> obj.contains("BIRCH") ? Material.BIRCH_LOG : Material.OAK_LOG;
+            case "FARMING"        -> obj.contains("CARROT") ? Material.CARROT : Material.WHEAT;
+            case "MAIL_SORTING"   -> Material.PAPER;
+            case "COOKING"        -> Material.BOWL;
+            default               -> Material.PAPER;
         };
     }
 

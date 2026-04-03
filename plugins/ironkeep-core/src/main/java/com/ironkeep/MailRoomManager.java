@@ -1,6 +1,8 @@
 package com.ironkeep;
 
-import org.bukkit.Bukkit;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.title.Title;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -17,6 +19,7 @@ import org.bukkit.persistence.PersistentDataType;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,25 +28,33 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class MailRoomManager {
 
     private final IronKeepPlugin plugin;
     private final NamespacedKey mailDestinationKey;
+    private final Random random = new Random();
 
     // Active mail sorting sessions per player
     private final Map<UUID, MailSortingState> activeStates = new HashMap<>();
 
+    // Tracks which barrel key the player was last looking at, so clearTitle() is only
+    // called once when they look away (avoids spamming the packet every 4 ticks).
+    private final Map<UUID, String> lastLookedBarrel = new HashMap<>();
+    // Per-player look-at task IDs
+    private final Map<UUID, Integer> lookTasks = new HashMap<>();
+
     // Config values
-    private double maxGoldBonus = 40.0;
-    private double maxShardsBonus = 40.0;
+    private double maxGoldBonus = 120.0;
+    private double maxShardsBonus = 70.0;
 
     // Rank → mail-count
     private final Map<Integer, Integer> mailCounts = new HashMap<>();
     // Rank → list of destination names
     private final Map<Integer, List<String>> rankDestinations = new HashMap<>();
 
-    // Barrel location string ("world,x,y,z") → destination label
+    // Barrel location string ("world,x,y,z") → static destination label (used for isBarrel checks)
     private final Map<String, String> barrelDestinations = new HashMap<>();
     // Barrel location string ("world,x,y,z") → facing direction (e.g. "NORTH", "SOUTH")
     private final Map<String, String> barrelFacings = new HashMap<>();
@@ -66,8 +77,8 @@ public class MailRoomManager {
         // Accuracy bonus
         ConfigurationSection bonusSection = yaml.getConfigurationSection("accuracy-bonus");
         if (bonusSection != null) {
-            maxGoldBonus = bonusSection.getDouble("max-gold-coins", 40.0);
-            maxShardsBonus = bonusSection.getDouble("max-shards", 40.0);
+            maxGoldBonus = bonusSection.getDouble("max-gold-coins", 120.0);
+            maxShardsBonus = bonusSection.getDouble("max-shards", 70.0);
         }
 
         // Difficulty per rank
@@ -76,7 +87,6 @@ public class MailRoomManager {
             for (String rankKey : diffSection.getKeys(false)) {
                 ConfigurationSection rankEntry = diffSection.getConfigurationSection(rankKey);
                 if (rankEntry == null) continue;
-                // Parse rank number from "rank1", "rank2", etc.
                 String numStr = rankKey.replaceAll("[^0-9]", "");
                 if (numStr.isEmpty()) continue;
                 int rankNum = Integer.parseInt(numStr);
@@ -134,22 +144,56 @@ public class MailRoomManager {
 
     /**
      * Generates mail items for the player based on their rank, gives them the items,
-     * and creates a new MailSortingState session.
+     * and creates a new MailSortingState with a freshly randomized barrel→destination mapping.
+     * Barrel positions stay fixed in the world; which destination each barrel represents
+     * is shuffled every commission so players can't memorise the layout.
      */
     public void assignMail(Player player, int rankNumber) {
         List<String> destinations = rankDestinations.getOrDefault(rankNumber,
                 rankDestinations.getOrDefault(1, List.of("Armory", "Kitchen", "Warden Office", "Infirmary")));
         int mailCount = mailCounts.getOrDefault(rankNumber, mailCounts.getOrDefault(1, 4));
 
-        // Build a random selection of destinations (shuffled pool, may repeat if mail-count > dest count)
-        List<String> pool = new ArrayList<>(destinations);
-        Collections.shuffle(pool, new Random());
-        List<String> selected = new ArrayList<>();
-        for (int i = 0; i < mailCount; i++) {
-            selected.add(pool.get(i % pool.size()));
+        // ---- Build per-session randomized barrel → destination mapping ----
+        String playerWorld = player.getWorld().getName();
+        org.bukkit.World world = player.getWorld();
+        List<String> availableBarrelKeys = barrelDestinations.keySet().stream()
+                .filter(k -> k.startsWith(playerWorld + ","))
+                .filter(k -> {
+                    // Skip stale config entries where no actual BARREL block exists in the world
+                    String[] parts = k.split(",");
+                    if (parts.length != 4) return false;
+                    try {
+                        int bx = Integer.parseInt(parts[1]);
+                        int by = Integer.parseInt(parts[2]);
+                        int bz = Integer.parseInt(parts[3]);
+                        return world.getBlockAt(bx, by, bz).getType() == Material.BARREL;
+                    } catch (NumberFormatException e) { return false; }
+                })
+                .collect(Collectors.toList());
+        Collections.shuffle(availableBarrelKeys, random);
+
+        List<String> shuffledDests = new ArrayList<>(destinations);
+        Collections.shuffle(shuffledDests, random);
+
+        int mappingCount = Math.min(availableBarrelKeys.size(), shuffledDests.size());
+        if (mappingCount == 0) {
+            player.sendMessage(ChatColor.RED + "[Mail Room] No barrels configured. Contact an admin.");
+            return;
         }
 
-        // Give mail items to the player
+        Map<String, String> sessionMapping = new HashMap<>();
+        List<String> activeDests = new ArrayList<>();
+        for (int i = 0; i < mappingCount; i++) {
+            sessionMapping.put(availableBarrelKeys.get(i), shuffledDests.get(i));
+            activeDests.add(shuffledDests.get(i));
+        }
+
+        // ---- Build mail items using the active destinations ----
+        List<String> selected = new ArrayList<>();
+        for (int i = 0; i < mailCount; i++) {
+            selected.add(activeDests.get(i % activeDests.size()));
+        }
+
         for (String dest : selected) {
             ItemStack mail = new ItemStack(Material.PAPER);
             ItemMeta meta = mail.getItemMeta();
@@ -161,10 +205,15 @@ public class MailRoomManager {
             player.getInventory().addItem(mail);
         }
 
-        activeStates.put(player.getUniqueId(), new MailSortingState(mailCount));
+        MailSortingState state = new MailSortingState(mailCount);
+        state.setBarrelMapping(sessionMapping);
+        activeStates.put(player.getUniqueId(), state);
+
+        startLookTask(player);
 
         player.sendMessage(ChatColor.AQUA + "[Mail Room] " + ChatColor.WHITE
-                + "You received " + mailCount + " mail item(s). Deliver each to the correct labeled barrel.");
+                + "You received " + mailCount + " mail item(s). "
+                + "Look at each barrel to see its destination, then deliver the right mail.");
     }
 
     // -------------------------------------------------------------------------
@@ -173,8 +222,7 @@ public class MailRoomManager {
 
     /**
      * Called when a player right-clicks a barrel while holding a mail item.
-     * Checks whether the mail matches the barrel destination, consumes the item,
-     * and updates the session state.
+     * Uses the player's per-session barrel mapping to determine the barrel's destination.
      */
     public void handleDelivery(Player player, Block barrel, ItemStack heldItem) {
         UUID uuid = player.getUniqueId();
@@ -182,7 +230,8 @@ public class MailRoomManager {
         if (state == null) return;
 
         String mailDest = getMailDestination(heldItem);
-        String barrelDest = getBarrelDestination(barrel);
+        String key = barrelKey(barrel.getWorld().getName(), barrel.getX(), barrel.getY(), barrel.getZ());
+        String barrelDest = state.getBarrelDestination(key);
         if (mailDest == null || barrelDest == null) return;
 
         // Consume one mail item from the held slot
@@ -191,6 +240,8 @@ public class MailRoomManager {
         } else {
             player.getInventory().setItemInMainHand(null);
         }
+        // Force inventory resync to client (cancelled event may revert visual state otherwise)
+        player.updateInventory();
 
         state.incrementDelivered();
 
@@ -204,15 +255,68 @@ public class MailRoomManager {
 
         int remaining = state.getTotalMail() - state.getDelivered();
         if (state.isComplete()) {
-            player.sendMessage(ChatColor.GOLD + "All mail delivered! Use "
-                    + ChatColor.YELLOW + "/commission complete"
-                    + ChatColor.GOLD + " to collect your reward.");
+            player.sendMessage(ChatColor.GOLD + "All mail delivered! Return to the Commission Board to collect your reward.");
         } else {
             player.sendMessage(ChatColor.GRAY + "" + remaining + " mail item(s) remaining.");
         }
 
-        // Also increment commission manager progress so the standard check works
         plugin.getCommissionManager().incrementProgress(uuid, 1);
+    }
+
+    // -------------------------------------------------------------------------
+    // Look-at label system (subtitle-based)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Starts a repeating task (every 4 ticks) that ray-traces what the player is
+     * looking at. While they hold a mail item and aim at a registered barrel, a
+     * subtitle shows that barrel's session destination — like a hover tooltip.
+     * The subtitle refreshes every 4 ticks (0.2 s) so it stays visible as long
+     * as the player is looking. When they look away it clears immediately.
+     */
+    private void startLookTask(Player player) {
+        stopLookTask(player.getUniqueId());
+
+        Title.Times times = Title.Times.times(Duration.ZERO, Duration.ofMillis(400), Duration.ofMillis(200));
+
+        int taskId = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+            if (!player.isOnline()) { stopLookTask(player.getUniqueId()); return; }
+            UUID uuid = player.getUniqueId();
+            MailSortingState state = activeStates.get(uuid);
+            if (state == null) { stopLookTask(uuid); return; }
+
+            // Only show label when holding a mail item
+            if (!isMailItem(player.getInventory().getItemInMainHand())) {
+                if (lastLookedBarrel.remove(uuid) != null) player.clearTitle();
+                return;
+            }
+
+            Block target = player.getTargetBlockExact(6);
+            if (target != null && isBarrel(target)) {
+                String key = barrelKey(target.getWorld().getName(),
+                        target.getX(), target.getY(), target.getZ());
+                String dest = state.getBarrelDestination(key);
+                if (dest != null) {
+                    // Send every tick while aimed at a barrel — short stay (400 ms) keeps it
+                    // live continuously and fades naturally the moment they look away.
+                    player.showTitle(Title.title(
+                            Component.empty(),
+                            Component.text("\u2709 " + dest, NamedTextColor.AQUA),
+                            times));
+                    lastLookedBarrel.put(uuid, key);
+                    return;
+                }
+            }
+
+            // Not aiming at a barrel — clear the title once
+            if (lastLookedBarrel.remove(uuid) != null) player.clearTitle();
+        }, 1L, 4L).getTaskId();
+        lookTasks.put(player.getUniqueId(), taskId);
+    }
+
+    private void stopLookTask(UUID uuid) {
+        Integer taskId = lookTasks.remove(uuid);
+        if (taskId != null) plugin.getServer().getScheduler().cancelTask(taskId);
     }
 
     // -------------------------------------------------------------------------
@@ -235,15 +339,14 @@ public class MailRoomManager {
 
     public boolean isBarrel(Block block) {
         if (block == null || block.getType() != Material.BARREL) return false;
-        String worldName = block.getWorld().getName();
-        String key = barrelKey(worldName, block.getX(), block.getY(), block.getZ());
+        String key = barrelKey(block.getWorld().getName(), block.getX(), block.getY(), block.getZ());
         return barrelDestinations.containsKey(key);
     }
 
+    /** Returns the static config destination for a barrel (used for admin/wand tools). */
     public String getBarrelDestination(Block block) {
         if (block == null) return null;
-        String worldName = block.getWorld().getName();
-        String key = barrelKey(worldName, block.getX(), block.getY(), block.getZ());
+        String key = barrelKey(block.getWorld().getName(), block.getX(), block.getY(), block.getZ());
         return barrelDestinations.get(key);
     }
 
@@ -256,11 +359,13 @@ public class MailRoomManager {
     }
 
     /**
-     * Removes all mail items from the player's inventory and clears their session state.
+     * Removes all mail items from the player's inventory, stops their look task,
+     * removes their barrel label entity, and clears their session state.
      */
     public void clearMail(Player player) {
         UUID uuid = player.getUniqueId();
-        // Remove mail items from inventory
+        stopLookTask(uuid);
+        if (lastLookedBarrel.remove(uuid) != null) player.clearTitle();
         player.getInventory().setContents(
                 java.util.Arrays.stream(player.getInventory().getContents())
                         .map(item -> isMailItem(item) ? null : item)
@@ -332,7 +437,7 @@ public class MailRoomManager {
 
     /**
      * Places BARREL blocks at all configured locations in the given world.
-     * Requires OP permission — called from /mailroom setup.
+     * Called from /mailroom setup.
      */
     public void setupBarrels(World world) {
         int placed = 0;
@@ -347,7 +452,6 @@ public class MailRoomManager {
                 int z = Integer.parseInt(parts[3]);
                 org.bukkit.block.Block barrelBlock = world.getBlockAt(x, y, z);
                 barrelBlock.setType(Material.BARREL);
-                // Apply facing if configured
                 String facingStr = barrelFacings.get(entry.getKey());
                 if (facingStr != null) {
                     try {

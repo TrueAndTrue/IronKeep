@@ -396,6 +396,22 @@ public class TutorialManager {
             }
         }
 
+        // For ACCEPT_COMMISSION steps with an assign-commission, give the commission
+        // immediately (2-tick delay so messages land first). This ensures the player
+        // has a commission in hand right away rather than waiting for zone entry.
+        // Zone entry (onGuideProximityReached) remains as a fallback for players who
+        // had an active commission when the step started.
+        if (step.getTrigger() == TutorialStep.TriggerType.ACCEPT_COMMISSION
+                && step.getAssignCommission() != null) {
+            final String commId = step.getAssignCommission();
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (!player.isOnline()) return;
+                if (!plugin.getCommissionManager().hasActiveCommission(player)) {
+                    plugin.getCommissionManager().assignCommission(player, commId);
+                }
+            }, 2L);
+        }
+
         // AUTO steps advance immediately (next tick so messages are delivered first)
         if (step.getTrigger() == TutorialStep.TriggerType.AUTO) {
             plugin.getServer().getScheduler().runTaskLater(plugin, () -> {

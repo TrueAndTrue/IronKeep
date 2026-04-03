@@ -35,8 +35,8 @@ commissions:
     description: "Sort mail in the Warden's Mail Room"
     objective-item: PAPER
     objective-quantity: 6
-    reward-amount: 120.0
-    shards-reward: 70.0
+    reward-amount: 40.0
+    shards-reward: 40.0
 
   # --- Cooking — Rank 1 ---
 

@@ -97,10 +97,14 @@ public class CommissionManager {
         if (def.getType().equalsIgnoreCase("MAIL_SORTING") && mailRoomManager != null) {
             int rankNum = rankManager != null ? rankManager.getPlayerRank(uuid) : 1;
             mailRoomManager.assignMail(player, rankNum);
+            player.sendMessage(ChatColor.GRAY + "Tip: " + ChatColor.YELLOW
+                    + "Hold a piece of mail and right-click the correct barrel to deliver it.");
         }
         if (def.getType().equalsIgnoreCase("COOKING") && kitchenManager != null) {
             int rankNum = rankManager != null ? rankManager.getPlayerRank(uuid) : 1;
             kitchenManager.assignRecipe(player, rankNum);
+            player.sendMessage(ChatColor.GRAY + "Tip: " + ChatColor.YELLOW
+                    + "The Kitchen is a mess — find the ingredients scattered around, then place them in the Cauldron to complete the commission!");
         }
         if (farmingListener != null) {
             if (def.getType().equalsIgnoreCase("FARMING")) {
@@ -189,10 +193,14 @@ public class CommissionManager {
         if (def.getType().equalsIgnoreCase("MAIL_SORTING") && mailRoomManager != null) {
             int rankNum = rankManager != null ? rankManager.getPlayerRank(uuid) : 1;
             mailRoomManager.assignMail(player, rankNum);
+            player.sendMessage(ChatColor.GRAY + "Tip: " + ChatColor.YELLOW
+                    + "Hold a piece of mail and right-click the correct barrel to deliver it.");
         }
         if (def.getType().equalsIgnoreCase("COOKING") && kitchenManager != null) {
             int rankNum = rankManager != null ? rankManager.getPlayerRank(uuid) : 1;
             kitchenManager.assignRecipe(player, rankNum);
+            player.sendMessage(ChatColor.GRAY + "Tip: " + ChatColor.YELLOW
+                    + "The Kitchen is a mess — find the ingredients scattered around, then place them in the Cauldron to complete the commission!");
         }
         if (farmingListener != null) {
             if (def.getType().equalsIgnoreCase("FARMING")) {
@@ -223,7 +231,7 @@ public class CommissionManager {
             org.bukkit.entity.Player player = org.bukkit.Bukkit.getPlayer(uuid);
             if (player != null) {
                 player.sendMessage(org.bukkit.ChatColor.GREEN
-                        + "Commission objective reached! Use /commission complete to turn in.");
+                        + "Commission complete! Return to the Commission Board to collect your reward.");
             }
         }
     }
@@ -244,7 +252,7 @@ public class CommissionManager {
                 && !def.getType().equalsIgnoreCase("MAIL_SORTING")
                 && !def.getType().equalsIgnoreCase("COOKING")) {
             player.sendMessage(ChatColor.GREEN
-                    + "Commission objective reached! Use /commission complete to turn in.");
+                    + "Commission complete! Return to the Commission Board to collect your reward.");
         }
     }
 

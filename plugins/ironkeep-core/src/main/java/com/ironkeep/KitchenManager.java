@@ -375,9 +375,7 @@ public class KitchenManager {
         // Schedule close to avoid closing inside event handler
         plugin.getServer().getScheduler().runTask(plugin, (Runnable) player::closeInventory);
 
-        player.sendMessage(PREFIX + ChatColor.GREEN + "Dish locked in! Use "
-                + ChatColor.YELLOW + "/commission complete"
-                + ChatColor.GREEN + " to collect your reward.");
+        player.sendMessage(PREFIX + ChatColor.GREEN + "Dish locked in! Return to the Commission Board to collect your reward.");
     }
 
     // -------------------------------------------------------------------------

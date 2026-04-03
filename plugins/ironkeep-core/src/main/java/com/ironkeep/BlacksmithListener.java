@@ -112,7 +112,7 @@ public class BlacksmithListener implements Listener {
         }
 
         int nextLevel = currentLevel + 1;
-        long cost = plugin.getConfig().getLong("blacksmith.cost-per-level", 100L);
+        long cost = enchantmentCost(enchantment, nextLevel);
 
         CurrencyManager cm = plugin.getCurrencyManager();
         if (!cm.hasShards(player.getUniqueId(), cost)) {
@@ -146,12 +146,13 @@ public class BlacksmithListener implements Listener {
         boolean hasTool = isValidTool(tool);
         int effLevel  = hasTool ? tool.getEnchantmentLevel(Enchantment.EFFICIENCY) : 0;
         int fortLevel = hasTool ? tool.getEnchantmentLevel(Enchantment.FORTUNE) : 0;
-        long cost = plugin.getConfig().getLong("blacksmith.cost-per-level", 100L);
 
         gui.setItem(SLOT_EFFICIENCY, buildEnchantSlot(
-                Material.IRON_PICKAXE, "Efficiency", effLevel, MAX_EFFICIENCY, cost, hasTool));
+                Material.IRON_PICKAXE, "Efficiency", effLevel, MAX_EFFICIENCY,
+                Enchantment.EFFICIENCY, hasTool));
         gui.setItem(SLOT_FORTUNE, buildEnchantSlot(
-                Material.EMERALD, "Fortune", fortLevel, MAX_FORTUNE, cost, hasTool));
+                Material.EMERALD, "Fortune", fortLevel, MAX_FORTUNE,
+                Enchantment.FORTUNE, hasTool));
 
         // Shard balance display
         long shards = Math.round(plugin.getCurrencyManager().getShards(player.getUniqueId()));
@@ -167,7 +168,7 @@ public class BlacksmithListener implements Listener {
 
     private ItemStack buildEnchantSlot(Material icon, String enchName,
                                         int currentLevel, int maxLevel,
-                                        long cost, boolean hasTool) {
+                                        Enchantment enchantment, boolean hasTool) {
         ItemStack item = new ItemStack(icon);
         ItemMeta meta = item.getItemMeta();
 
@@ -185,17 +186,23 @@ public class BlacksmithListener implements Listener {
             ));
         } else {
             int nextLevel = currentLevel + 1;
+            long cost = enchantmentCost(enchantment, nextLevel);
             meta.setDisplayName(ChatColor.YELLOW + "Buy " + enchName + " " + toRoman(nextLevel));
             meta.setLore(List.of(
                     ChatColor.GRAY + "Current level: " + (currentLevel == 0 ? "None" : toRoman(currentLevel)),
                     ChatColor.WHITE + "Upgrade to: " + ChatColor.AQUA + toRoman(nextLevel),
-                    ChatColor.LIGHT_PURPLE + "Cost: " + cost + " Shards",
+                    ChatColor.LIGHT_PURPLE + "Cost: " + String.format("%,d", cost) + " Shards",
                     ChatColor.DARK_GRAY + "Click to purchase"
             ));
         }
 
         item.setItemMeta(meta);
         return item;
+    }
+
+    private long enchantmentCost(Enchantment enchantment, int level) {
+        String key = enchantment == Enchantment.EFFICIENCY ? "efficiency-costs" : "fortune-costs";
+        return plugin.getConfig().getLong("blacksmith." + key + "." + level, 100L);
     }
 
     // -------------------------------------------------------------------------

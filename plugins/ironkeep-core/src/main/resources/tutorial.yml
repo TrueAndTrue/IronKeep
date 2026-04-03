@@ -40,18 +40,18 @@ tutorial:
       guide-key: WARDEN
       assign-commission: mining_coal
       dialogue:
-        - "&8[Warden] &7You there. New prisoner."
-        - "&8[Warden] &7Eyes forward. You're here to work, not to wander."
-        - "&8[Warden] &7Your first assignment: get to the mines and haul coal."
-        - "&8[Warden] &7Don't keep me waiting."
+        - "&8[Warden] &bYou there. New prisoner."
+        - "&8[Warden] &bEyes forward. You're here to work, not to wander."
+        - "&8[Warden] &bYour first assignment: get to the mines and haul coal."
+        - "&8[Warden] &bDon't keep me waiting."
 
     # -------------------------------------------------------------------------
     # Phase 2: First commission — coal mining
     # -------------------------------------------------------------------------
 
     - id: mine_coal
-      message: "&6[Commission] &eMine coal in the Mining Area, then use /commission complete."
-      objective: "Mine Coal → /commission complete"
+      message: "&6[Commission] &eMine coal in the Mining Area, then return to the Commission Board."
+      objective: "Mine Coal"
       trigger: COMPLETE_COMMISSION
       guide-key: MINING
 
@@ -61,15 +61,15 @@ tutorial:
     # -------------------------------------------------------------------------
 
     - id: find_mailroom
-      message: "&8[Warden] &7Satisfactory. Report to the Mail Room for your next assignment."
+      message: "&8[Warden] &bSatisfactory. Report to the Mail Room for your next assignment."
       objective: "Find the Mail Room"
       trigger: ACCEPT_COMMISSION
       guide-key: MAILROOM
       assign-commission: mail_sorting_r1
 
     - id: complete_mail
-      message: "&6[Commission] &eSort the mail, then use /commission complete."
-      objective: "Sort Mail → /commission complete"
+      message: "&6[Commission] &eSort the mail, then return to the Commission Board."
+      objective: "Sort Mail"
       trigger: COMPLETE_COMMISSION
 
     # -------------------------------------------------------------------------
@@ -78,15 +78,15 @@ tutorial:
     # -------------------------------------------------------------------------
 
     - id: find_kitchen
-      message: "&8[Warden] &7Not bad. The Kitchen needs your help next. Head over there."
+      message: "&8[Warden] &bNot bad. The Kitchen needs your help next. Head over there."
       objective: "Find the Kitchen"
       trigger: ACCEPT_COMMISSION
       guide-key: KITCHEN
       assign-commission: cooking_r1
 
     - id: complete_kitchen
-      message: "&6[Commission] &eComplete the cooking commission, then use /commission complete."
-      objective: "Cook → /commission complete"
+      message: "&6[Commission] &eComplete the cooking commission, then return to the Commission Board."
+      objective: "Cook"
       trigger: COMPLETE_COMMISSION
 
     # -------------------------------------------------------------------------
@@ -94,7 +94,7 @@ tutorial:
     # -------------------------------------------------------------------------
 
     - id: free_commissions
-      message: "&8[Warden] &7You know the ropes now. Keep completing commissions and come back to me when you're ready to advance."
+      message: "&8[Warden] &bYou know the ropes now. Keep completing commissions and come back to me when you're ready to advance. &eSave up &61,000 Gold Coins &eand come speak to me to rank up."
       objective: "Complete commissions · talk to the Warden to rank up"
       trigger: RANK_UP
 
@@ -104,27 +104,27 @@ tutorial:
     # -------------------------------------------------------------------------
 
     - id: intro_woodcutting
-      message: "&8[Warden] &7Rank secured. The Woodcutting area is now open to you. Get to work."
+      message: "&8[Warden] &bRank secured. The Woodcutting area is now open to you. Get to work."
       objective: "Find the Woodcutting area"
       trigger: ACCEPT_COMMISSION
       guide-key: WOODCUTTING
       assign-commission: woodcutting_oak
 
     - id: complete_woodcutting
-      message: "&6[Commission] &eChop oak wood in the Woodcutting area, then use /commission complete."
-      objective: "Chop Oak Wood → /commission complete"
+      message: "&6[Commission] &eChop oak wood in the Woodcutting area, then return to the Commission Board."
+      objective: "Chop Oak Wood"
       trigger: COMPLETE_COMMISSION
       dialogue:
-        - "&8[Warden] &7Congratulations. You've figured out how to do more work for me."
-        - "&8[Warden] &7Come back when you've got a bit more working experience under your belt."
-        - "&8[Warden] &7Return to me when you have 700 Gold Coins to rank up again."
+        - "&8[Warden] &bCongratulations. You've figured out how to do more work for me."
+        - "&8[Warden] &bCome back when you've got a bit more working experience under your belt."
+        - "&8[Warden] &bReturn to me when you have 1450 Gold Coins to rank up again."
 
     # -------------------------------------------------------------------------
     # Phase 7: Free commissions — player earns their way to Rank 3
     # -------------------------------------------------------------------------
 
     - id: free_commissions_2
-      message: "&8[Warden] &7Good work. Keep at it and come back when you're ready to advance again."
+      message: "&8[Warden] &bGood work. Keep at it and come back when you're ready to advance again."
       objective: "Complete commissions · talk to the Warden to rank up"
       trigger: RANK_UP
 
@@ -134,27 +134,27 @@ tutorial:
     # -------------------------------------------------------------------------
 
     - id: intro_farming
-      message: "&8[Warden] &7Rank secured. The Farming area is now open to you. Head over there."
+      message: "&8[Warden] &bRank secured. The Farming area is now open to you. Head over there."
       objective: "Find the Farming area"
       trigger: ACCEPT_COMMISSION
       guide-key: FARMING
       assign-commission: farming_wheat
 
     - id: complete_farming
-      message: "&6[Commission] &eHarvest wheat in the Farming area, then use /commission complete."
-      objective: "Harvest Wheat → /commission complete"
+      message: "&6[Commission] &eHarvest wheat in the Farming area, then return to the Commission Board."
+      objective: "Harvest Wheat"
       trigger: COMPLETE_COMMISSION
       dialogue:
-        - "&8[Warden] &7Not bad. You're becoming more useful by the day."
-        - "&8[Warden] &7You now have access to Mining, Woodcutting, Farming, Mail, and Cooking."
-        - "&8[Warden] &7Keep grinding. Freedom doesn't come cheap."
+        - "&8[Warden] &bNot bad. You're becoming more useful by the day."
+        - "&8[Warden] &bYou now have access to Mining, Woodcutting, Farming, Mail, and Cooking."
+        - "&8[Warden] &bKeep grinding. Freedom doesn't come cheap."
 
     # -------------------------------------------------------------------------
     # Phase 9: Tutorial complete
     # -------------------------------------------------------------------------
 
     - id: tutorial_complete
-      message: "&8[Warden] &aYou're finding your footing, prisoner. The rest is up to you."
+      message: "&8[Warden] &bYou're finding your footing, prisoner. The rest is up to you."
       title: "&aTutorial Complete"
       subtitle: "&eKeep earning your freedom"
       trigger: AUTO

@@ -12,6 +12,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockFadeEvent;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -225,6 +226,16 @@ public class FarmingListener implements Listener {
     // -------------------------------------------------------------------------
     // Farmland protection
     // -------------------------------------------------------------------------
+
+    /** Prevents farmland in the farming zone from drying out (no water source required). */
+    @EventHandler
+    public void onFarmlandFade(BlockFadeEvent event) {
+        if (event.getBlock().getType() != Material.FARMLAND) return;
+        ZoneManager zm = plugin.getZoneManager();
+        if (zm != null && zm.isInValidZone(event.getBlock().getLocation(), "FARMING")) {
+            event.setCancelled(true);
+        }
+    }
 
     /** Prevents players from trampling farmland anywhere in the farming zone. */
     @EventHandler

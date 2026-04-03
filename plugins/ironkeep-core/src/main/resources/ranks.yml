@@ -22,21 +22,21 @@ ranks:
   rank2:
     rank: 2
     display-name: "Worker"
-    cost: 700
+    cost: 1000
     unlocked-types:
       - WOODCUTTING   # Woodcutting commissions only
 
   rank3:
     rank: 3
     display-name: "Laborer"
-    cost: 1000
+    cost: 1450
     unlocked-types:
       - FARMING       # Farming commissions only
 
   rank4:
     rank: 4
     display-name: "Trustee"
-    cost: 1400
+    cost: 1800
     unlocked-types:
       - MINING_IRON   # Iron mining
       - MINING_GOLD   # Gold mining
